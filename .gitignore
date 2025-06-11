@@ -1,0 +1,46 @@
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.blg
+*.brf
+*.idx
+*.ilg
+*.ind
+*.lof
+*.lot
+*.out
+*.toc
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.fls
+*.log
+*.fdb_latexmk
+*.synctex.gz
+*.bcf
+*.run.xml
+
+# TeXShop specific files
+*.synctex
+*.synctex(busy)
+*.pdfsync
+
+
+# Other LaTeX editor specific files
+*.dvi
+*.ps
+*.nav
+*.snm
+*.vrb
+
+# Mac specific files
+.DS_Store
+
+
+# Generated bibliography (biblatex/biber)
+*.bbl
+*.bcf
+*.blg

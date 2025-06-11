@@ -1,0 +1,498 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage[a-1b]{pdfx}
+\usepackage{balance}
+\usepackage{hyperref} 
+\usepackage{booktabs} 
+\usepackage{xcolor}    
+\usepackage{colortbl} 
+\usepackage{subcaption}
+\captionsetup[figure]{name={Figure},labelsep=period, font=footnotesize}
+\captionsetup[table]{labelsep=period, font={sc,footnotesize} }
+
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+% \usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+
+\title{Pre‑Tactical Flight‑Delay and Turnaround Forecasting with Synthetic Aviation Data}
+
+
+
+\author{
+    \IEEEauthorblockN{Abdulmajid Murad$^{1}$, Massimiliano Ruocco$^{1,2}$}
+    \IEEEauthorblockA{
+        \parbox{0.5\textwidth}{
+            \centering
+            $^1$Department of Software Engineering, Safety and Security \\ 
+            SINTEF Digital \\
+            Trondheim, Norway \\
+            \{abdulmajid.murad, massimiliano.ruocco\}@sintef.no
+        }
+        \hspace{0.05\textwidth}
+        \parbox{0.4\textwidth}{
+            \centering
+            $^2$Department of Computer Science \\
+            Norwegian University of Science and Technology \\
+            Trondheim, Norway \\
+            massimiliano.ruocco@ntnu.no
+        }
+    }
+}
+
+
+\maketitle
+
+
+
+\begin{abstract}
+    
+    The limited availability of comprehensive flight operations data poses significant challenges for developing and validating machine learning models in aviation. This study evaluates whether synthetic flight data can effectively substitute for real operational data in training predictive models for critical aviation metrics in pre-tactical scenarios—predictions made hours to days before operations using only scheduled information. We assess four state-of-the-art synthetic data generators through their utility in predicting aircraft turnaround times, departure delays, and arrival delays. Using a Train on Synthetic, Test on Real (TSTR) methodology, we analyze model performance when only scheduled flight information is available. Our results demonstrate that models trained on synthetic data from advanced transformer-based generators achieve 94-97\% of the performance of models trained on real data. 
+
+\end{abstract}
+
+\begin{IEEEkeywords}
+Synthetic Data, Air Traffic Management (ATM), Flight Delay Prediction, Turnaround Time, Machine Learning, Data Utility, Generative Models, Aviation Operations
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+
+Air traffic management systems generate vast amounts of operational data critical for optimizing airline operations, airport resource allocation, and passenger experience. However, access to this data remains severely restricted due to commercial sensitivity, privacy concerns, and competitive considerations. This data scarcity creates a fundamental challenge: how can researchers and operators develop robust machine learning models for operational prediction without access to comprehensive historical datasets?
+
+Pre-tactical prediction—forecasting operational metrics hours to days in advance using only scheduled information—represents a particularly challenging yet crucial task in aviation. Airlines and airports rely on these predictions for crew scheduling, gate assignment, and resource allocation. Unlike tactical predictions that can leverage real-time data, pre-tactical models must work with limited information, making both the prediction task more difficult and the quality of training data more critical.
+
+
+Recent advances in synthetic data generation offer a potential solution by creating artificial datasets that preserve the statistical properties of real operations while protecting sensitive information. However, a critical question remains unanswered: can models trained on synthetic data achieve comparable performance to those trained on real data when applied to pre-tactical operational prediction tasks?
+
+This study addresses this gap by conducting a comprehensive evaluation of synthetic flight data utility across two critical operational prediction tasks: aircraft turnaround time and flight delays. We assess four synthetic data generation approaches—ranging from statistical methods to transformer-based architectures—and evaluate their effectiveness in preserving the complex relationships necessary for accurate operational forecasting.
+
+This study addresses this gap by conducting a comprehensive evaluation of synthetic flight data utility across three critical pre-tactical prediction tasks: aircraft turnaround time, departure delays, and arrival delays. We assess four synthetic data generation approaches—ranging from statistical methods to transformer-based architectures—and evaluate their effectiveness in preserving the complex relationships necessary for accurate operational forecasting when only scheduled information is available.
+
+Our key contributions include:
+\begin{itemize}
+    \item A systematic evaluation framework for assessing synthetic data utility in pre-tactical aviation contexts.
+    \item Quantitative analysis of performance degradation when substituting synthetic for real training data in schedule-based predictions.
+    \item Identification of which synthetic generation approaches best preserve predictive relationships when operational information is limited.
+    \item Analysis of the fundamental predictability limits in pre-tactical scenarios.
+\end{itemize}
+
+
+
+
+\section{Background }
+
+\subsection{ Pre-tactical Operational Prediction in Aviation}
+Pre-tactical prediction in aviation refers to forecasts made hours to days before actual operations, relying primarily on scheduled information rather than real-time data. This prediction horizon is crucial for strategic decision-making but presents unique challenges due to the absence of current operational status.
+Aircraft turnaround time—the duration between arrival and subsequent departure—affects gate utilization and network efficiency. In pre-tactical scenarios, predictions must rely on scheduled times, historical patterns, and known characteristics like aircraft type and airports, without access to actual delay information or current conditions.
+Similarly, predicting departure and arrival delays in pre-tactical mode requires inferring likely disruptions based solely on scheduled patterns, seasonal trends, and historical performance. The absence of real-time information about weather conditions, air traffic flow, or technical issues makes these predictions inherently uncertain.
+Previous research has demonstrated the challenges in pre-tactical predictions. The complexity of flight operations, combined with numerous external factors not captured in schedules, creates inherent limitations in predictability. Understanding these limitations is crucial for setting realistic expectations for both real and synthetic data performance.
+
+
+\subsection{Synthetic Data in Pre-tactical Prediction}
+
+The Train on Synthetic, Test on Real (TSTR) paradigm evaluates whether models trained exclusively on synthetic data can generalize to real-world scenarios. In pre-tactical prediction, this approach faces unique challenges: synthetic generators must capture not only the statistical properties of scheduled operations but also the latent patterns that indicate future delays or extended turnarounds.
+The effectiveness of TSTR in pre-tactical scenarios depends critically on the synthetic generator's ability to preserve complex inter-feature dependencies that exist in scheduled data. While scheduled times might appear deterministic, patterns such as airport congestion during peak hours, carrier-specific operational characteristics, and route-dependent factors create predictable variations that sophisticated models can exploit.
+
+\subsection{Evaluation Challenges}
+Assessing synthetic data quality for pre-tactical tasks requires specialized evaluation approaches. Traditional metrics focusing on distributional similarity may miss crucial predictive relationships that only manifest when attempting to forecast future operations from scheduled information. This necessitates task-specific evaluation frameworks that measure both raw predictive performance and the preservation of feature relationships that domain experts recognize as operationally significant.
+
+
+\section{Related Work}
+
+Pre-tactical prediction in aviation has received increasing attention as airlines seek to improve operational planning. De Falco et al.  \cite{de2023probabilistic} developed probabilistic ML models for turnaround time prediction at major European hubs, achieving mean absolute errors of 7-9 minutes in strategic (pre-tactical) phase. Their work demonstrated that even with limited scheduled information, meaningful predictions are possible through careful feature engineering and model selection.
+
+Dalmau et al. \cite{dalmau2024probabilistic} specifically addressed pre-tactical delay prediction using quantile regression to output probability distributions of delays days in advance. Using only scheduled information enriched with features like airline, aircraft type, and passenger count, they showed significant improvements over statistical baselines, highlighting the value of machine learning approaches in pre-tactical scenarios.
+
+While these studies demonstrate the potential of pre-tactical prediction, they rely on access to comprehensive historical datasets—a luxury not available to many researchers and smaller operators. Our work bridges this gap by investigating whether synthetic data can enable similar predictive capabilities without requiring access to sensitive operational records.
+
+
+\section{Methodology}
+
+\subsection{Dataset}
+We utilized flight operations data from OAG's Flight Info Direct database, covering European flights from March, June, September, and December 2019. After cleaning and filtering for completed flights (state = ``InGate''), we obtained a dataset encompassing over 1.3 million flight records with comprehensive operational features. For pre-tactical prediction, we focused exclusively on features available at schedule publication time:
+
+\begin{itemize}
+    \item \textbf{Scheduled Information}: Departure/arrival times (UTC), airports (IATA codes), and planned flight duration
+    \item \textbf{Operational Characteristics}: Carrier code, aircraft type (IATA code), and flight number
+    \item \textbf{Temporal Features}: Month, day of week, scheduled hour, and scheduled minute extracted from departure time
+    \item \textbf{Prediction targets}: We set the actual delays and turnaround times as prediction targets, that were execluded from input features in pre-tactical mode. 
+\end{itemize}
+
+\subsubsection{Data Preprocessing Pipeline}
+The preprocessing pipeline involved several critical steps to ensure data quality and consistency:
+
+\begin{enumerate}
+    \item \textbf{Initial Filtering}: Records were filtered to include only completed flights with full operational timelines
+    \item \textbf{Feature Selection}: From 70+ original columns, we selected features based on their availability at schedule time and relevance to prediction tasks
+    \item \textbf{Time Standardization}: 
+    \begin{itemize}
+        \item Datetime columns were converted to proper datetime objects
+        \item Time zone offsets between local and UTC times were calculated and applied
+        \item All timestamps were standardized to UTC for consistency
+    \end{itemize}
+    \item \textbf{Target Variable Calculation}:
+    \begin{itemize}
+        \item Departure delay: $\text{DEP}_{\text{delay}} = \text{AOBT} - \text{SOBT}$
+        \item Arrival delay: $\text{ARR}_{\text{delay}} = \text{AIBT} - \text{SIBT}$
+        \item Turnaround time: For each aircraft (matched by registration), $\text{TAT} = \text{AOBT}_{\text{next}} - \text{AIBT}_{\text{current}}$
+    \end{itemize}
+    \item \textbf{Data Splitting}: 80/20 train-test split with fixed random seed for reproducibility
+\end{enumerate}
+
+\subsection{Synthetic Data Generation}
+Four state-of-the-art synthetic data generators were evaluated, each representing different technical approaches to capturing the complex relationships in flight data:
+
+\subsubsection{Gaussian Copula (GC)}
+A statistical approach that models dependencies through copula functions while preserving marginal distributions. For random variables $X_1, X_2, \ldots, X_d$ with marginal CDFs $F_1, F_2, \ldots, F_d$, the Gaussian copula is defined as:
+
+\begin{equation}
+C_\theta(u_1, u_2, \ldots, u_d) = \Phi_\theta(\Phi^{-1}(u_1), \Phi^{-1}(u_2), \ldots, \Phi^{-1}(u_d))
+\end{equation}
+
+where $\Phi_\theta$ is the joint CDF of a multivariate normal distribution with correlation matrix $\theta$, and $\Phi^{-1}$ is the inverse standard normal CDF. We combined this with Kernel Density Estimation (KDE) for marginal distributions.
+
+\subsubsection{Conditional Tabular GAN (CTGAN)}
+A generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
+\begin{itemize}
+    \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
+    \item \textbf{Conditional generation}: Employs training-by-sampling with log-frequency to address category imbalance
+    \item \textbf{PacGAN framework}: Prevents mode collapse by having the discriminator evaluate multiple samples jointly
+    \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
+\end{itemize}
+
+\subsubsection{TabSyn}
+A two-stage approach combining Variational Autoencoders (VAE) with diffusion models:
+\begin{enumerate}
+    \item \textbf{Stage 1 - VAE Training}: Learns continuous latent representations of mixed-type data using:
+    \begin{equation}
+    \mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \cdot \mathcal{L}_{\text{KL}}
+    \end{equation}
+    where $\beta$ is adaptively scheduled during training
+    \item \textbf{Stage 2 - Diffusion in Latent Space}: Applies score-based diffusion to generate new latent vectors, requiring only 20-50 reverse steps compared to thousands in traditional diffusion
+\end{enumerate}
+
+\subsubsection{REaLTabFormer}
+A transformer-based model that treats each table row as a sequence of tokens. The architecture leverages:
+\begin{itemize}
+    \item \textbf{GPT-2 backbone}: 6 decoder layers with 768-dimensional embeddings
+    \item \textbf{Column-aware tokenization}: Separate vocabularies for each column type
+    \item \textbf{Regularization mechanisms}: Random masking (10\%) and bootstrap-based $Q_\delta$ testing to prevent memorization
+    \item \textbf{Constrained sampling}: Domain-specific token filtering during generation
+\end{itemize}
+
+\subsection{Pre-tactical Prediction Tasks}
+
+We evaluated three operational prediction scenarios, all in pre-tactical mode where only scheduled information is available:
+
+\subsubsection{Turnaround Time Prediction}
+Forecasting the duration between aircraft arrival (In-Block) and departure (Off-Block) using:
+\begin{itemize}
+    \item Input features: Scheduled times, airports, carrier, aircraft type, temporal features
+    \item Target: Actual turnaround time in minutes
+    \item Operational relevance: Critical for gate allocation and ground resource planning
+\end{itemize}
+
+\subsubsection{Departure Delay Prediction}
+Estimating the difference between scheduled and actual departure times:
+\begin{itemize}
+    \item Input features: Same as turnaround prediction
+    \item Target: Departure delay in minutes (positive for late departures)
+    \item Operational relevance: Enables proactive delay mitigation strategies
+\end{itemize}
+
+\subsubsection{Arrival Delay Prediction}
+Forecasting arrival delays using only pre-departure information:
+\begin{itemize}
+    \item Input features: Same as above predictions
+    \item Target: Arrival delay in minutes
+    \item Challenge: Most difficult task due to cumulative uncertainties from departure delays and en-route factors
+\end{itemize}
+
+\subsection{Evaluation Framework}
+
+Our evaluation employed multiple complementary metrics to assess synthetic data quality comprehensively:
+
+\subsubsection{Predictive Performance Metrics}
+\begin{itemize}
+    \item \textbf{Root Mean Squared Error (RMSE)}: Emphasizes large prediction errors critical for disruption management:
+    \begin{equation}
+    \text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}
+    \end{equation}
+    
+    \item \textbf{Mean Absolute Error (MAE)}: Provides typical error magnitude for operational planning:
+    \begin{equation}
+    \text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|y_i - \hat{y}_i|
+    \end{equation}
+    
+    \item \textbf{Coefficient of Determination (R²)}: Measures explained variance to assess predictability limits:
+    \begin{equation}
+    R^2 = 1 - \frac{\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}{\sum_{i=1}^{n}(y_i - \bar{y})^2}
+    \end{equation}
+\end{itemize}
+
+\subsubsection{Utility Score}
+A normalized metric combining RMSE and R² performance to quantify how well synthetic-trained models substitute for real-trained models:
+
+\begin{equation}
+\text{Utility} = 0.5 \times \min\left(\frac{\text{RMSE}_{\text{real}}}{\text{RMSE}_{\text{synthetic}}}, 1.0\right) + 0.5 \times \min\left(\frac{R^2_{\text{synthetic}}}{R^2_{\text{real}}}, 1.0\right)
+\end{equation}
+
+\subsubsection{Feature Importance Alignment}
+To ensure synthetic data preserves operational relationships, we compute the cosine similarity between feature importance vectors from models trained on real ($\mathbf{v}_{\text{real}}$) versus synthetic ($\mathbf{v}_{\text{synthetic}}$) data:
+
+\begin{equation}
+\text{Alignment} = \frac{\mathbf{v}_{\text{real}} \cdot \mathbf{v}_{\text{synthetic}}}{||\mathbf{v}_{\text{real}}|| \cdot ||\mathbf{v}_{\text{synthetic}}||}
+\end{equation}
+
+\subsection{Machine Learning Pipeline}
+
+\subsubsection{Model Selection}
+We employed five regression algorithms to ensure robust evaluation across different modeling paradigms:
+\begin{itemize}
+    \item \textbf{Decision Tree}: Captures non-linear patterns through recursive partitioning
+    \item \textbf{Random Forest}: Ensemble of trees for improved generalization
+    \item \textbf{Gradient Boosting}: Sequential ensemble focusing on residual errors
+    \item \textbf{XGBoost}: Optimized gradient boosting with regularization
+    \item \textbf{CatBoost}: Gradient boosting specialized for categorical features
+\end{itemize}
+
+\subsubsection{Training Protocol}
+\begin{enumerate}
+    \item \textbf{Train on Real, Test on Real (TRTR)}: Baseline performance using historical data
+    \item \textbf{Train on Synthetic, Test on Real (TSTR)}: Utility evaluation of synthetic data
+    \item \textbf{Feature Engineering}: All models used identical pre-tactical features to ensure fair comparison
+    \item \textbf{Hyperparameter Optimization}: Default parameters were used to avoid biasing results toward specific generators
+\end{enumerate}
+
+
+\section{Results and Discussion}
+
+\subsection{Departure Delay Prediction}
+
+Pre-tactical departure delay prediction emerged as one of the most challenging tasks, with real-data models achieving R² values between 0.10 and 0.30 (Figure~\ref{fig:departure_r2}). This limited predictability reflects the numerous external factors influencing departure times—weather conditions, air traffic flow restrictions, crew availability, and technical issues—that are not captured in scheduled information alone. The inherent stochasticity of these factors creates a fundamental ceiling on pre-tactical prediction accuracy, regardless of data quality.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{plots/departure_delay_min_pre-tactical/departure_delay_min_pre-tactical_r2.pdf}
+    \caption{Coefficient of determination (R²) for pre-tactical departure delay prediction across different models and synthetic data generators.}
+    \label{fig:departure_r2}
+\end{figure}
+
+Despite these constraints, clear performance hierarchies emerged among synthetic generators. The RMSE and MAE metrics reveal REaLTabFormer's superiority in preserving the subtle predictive patterns present in scheduled data (Figures~\ref{fig:departure_pre_rmse} and \ref{fig:departure_pre_mae}). REaLTabFormer consistently achieved the lowest error rates, with RMSE values within 4\% of real-data baselines. The transformer architecture's ability to capture long-range dependencies between categorical features (airlines, airports) and temporal patterns proves crucial for this task.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\linewidth]{plots/departure_delay_min_pre-tactical/departure_delay_min_pre-tactical_rmse.pdf}
+        \caption{Root Mean Squared Error}
+        \label{fig:departure_pre_rmse}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\linewidth]{plots/departure_delay_min_pre-tactical/departure_delay_min_pre-tactical_mae.pdf}
+        \caption{Mean Absolute Error}
+        \label{fig:departure_pre_mae}
+    \end{subfigure}
+    \caption{Prediction error metrics for pre-tactical departure delay across models and synthetic data generators.}
+\end{figure}
+
+The utility scores quantify the practical impact of these differences (Figure~\ref{fig:departure_utility}). REaLTabFormer achieved a utility score of 0.96, indicating that models trained on its synthetic data retain 96\% of the predictive capability of models trained on real data. This represents a remarkable preservation of predictive relationships given the task's inherent difficulty. TabSyn's utility dropped more significantly to 0.76, suggesting that departure delay patterns require sophisticated modeling of rare events and edge cases that simpler diffusion approaches struggle to capture consistently.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{plots/departure_delay_min_pre-tactical/departure_delay_min_pre-tactical_avg_utility.pdf}
+    \caption{Average utility scores for pre-tactical departure delay prediction across synthetic data generators.}
+    \label{fig:departure_utility}
+\end{figure}
+
+Feature importance analysis reveals that scheduled hour emerged as the overwhelmingly dominant predictor (Figure~\ref{fig:departure_features}), capturing well-known operational patterns: morning peak congestion, midday lulls, and evening cascade effects where early delays propagate through the network. Airport features remained important but with reduced relative weight compared to temporal factors, reflecting the systematic nature of delay patterns across different hubs.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{plots/departure_delay_min_pre-tactical/feature_importances/departure_delay_min_pre-tactical_all_models_feature_comparison.pdf}
+    \caption{Feature importance comparison for pre-tactical departure delay prediction averaged across all models.}
+    \label{fig:departure_features}
+\end{figure}
+
+The feature alignment analysis reveals interesting patterns (Figure~\ref{fig:departure_alignment}). While REaLTabFormer maintained near-perfect alignment (0.99), indicating that models trained on its synthetic data identify the same operational drivers as real-data models, Gaussian Copula's alignment dropped to 0.67. This misalignment could lead to incorrect operational conclusions if synthetic data users assume the same causal relationships present in real operations.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{plots/departure_delay_min_pre-tactical/departure_delay_min_pre-tactical_avg_alignment_score.pdf}
+    \caption{Average feature importance alignment scores for pre-tactical departure delay prediction.}
+    \label{fig:departure_alignment}
+\end{figure}
+
+\subsection{Arrival Delay Prediction}
+
+Pre-tactical arrival delay prediction proved to be the most challenging task among all evaluated scenarios, with real-data R² values rarely exceeding 0.30 (Figure~\ref{fig:arrival_pre_r2}). This represents the cumulative uncertainty of multiple operational phases: ground operations affecting departure timing, en-route factors including air traffic congestion and weather, and destination airport conditions. The complexity of predicting arrival delays hours in advance using only scheduled information highlights fundamental limitations in aviation predictability.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{plots/arrival_delay_min_pre-tactical/arrival_delay_min_pre-tactical_r2.pdf}
+    \caption{Coefficient of determination (R²) for pre-tactical arrival delay prediction across different models and synthetic data generators.}
+    \label{fig:arrival_pre_r2}
+\end{figure}
+
+The error metrics demonstrate that even under these challenging conditions, synthetic data generators maintained their relative performance hierarchy (Figures~\ref{fig:arrival_pre_rmse} and \ref{fig:arrival_pre_mae}). REaLTabFormer continued to achieve the lowest error rates. Thus, the transformer architecture's advantage becomes more pronounced in complex scenarios where capturing subtle interactions between multiple categorical and temporal features proves crucial.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\linewidth]{plots/arrival_delay_min_pre-tactical/arrival_delay_min_pre-tactical_rmse.pdf}
+        \caption{Root Mean Squared Error}
+        \label{fig:arrival_pre_rmse}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\linewidth]{plots/arrival_delay_min_pre-tactical/arrival_delay_min_pre-tactical_mae.pdf}
+        \caption{Mean Absolute Error}
+        \label{fig:arrival_pre_mae}
+    \end{subfigure}
+    \caption{Prediction error metrics for pre-tactical arrival delay across models and synthetic data generators.}
+\end{figure}
+
+Despite the increased task complexity, REaLTabFormer maintained  utility performance at 0.95 (Figure~\ref{fig:arrival_pre_utility}), demonstrating robustness across different prediction scenarios. This consistency suggests that the transformer-based approach successfully captures the underlying statistical structure that relates scheduled flight information to eventual arrival performance, even when that relationship becomes increasingly attenuated by intervening factors.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{plots/arrival_delay_min_pre-tactical/arrival_delay_min_pre-tactical_avg_utility.pdf}
+    \caption{Average utility scores for pre-tactical arrival delay prediction across synthetic data generators.}
+    \label{fig:arrival_pre_utility}
+\end{figure}
+
+Feature importance analysis for arrival delays revealed more complex patterns than departure delay prediction (Figure~\ref{fig:arrival_features}). Scheduled flight duration emerged as an additional significant predictor alongside temporal and airport features, reflecting the reality that longer flights have more opportunities for en-route delays and recovery. The distribution of importance across multiple features indicates that arrival delay prediction requires modeling interactions between temporal, spatial, and operational characteristics simultaneously.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{plots/arrival_delay_min_pre-tactical/feature_importances/arrival_delay_min_pre-tactical_all_models_feature_comparison.pdf}
+    \caption{Feature importance comparison for pre-tactical arrival delay prediction averaged across all models.}
+    \label{fig:arrival_features}
+\end{figure}
+
+The feature alignment scores maintained the established pattern, with REaLTabFormer achieving near-perfect alignment (0.99) while simpler methods showed progressive degradation (Figure~\ref{fig:arrival_alignment}). This consistency in feature relationship preservation across increasingly difficult tasks demonstrates REaLTabFormer's fundamental advantage in capturing the complex dependencies present in aviation operational data.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{plots/arrival_delay_min_pre-tactical/arrival_delay_min_pre-tactical_avg_alignment_score.pdf}
+    \caption{Average feature importance alignment scores for pre-tactical arrival delay prediction.}
+    \label{fig:arrival_alignment}
+\end{figure}
+
+\subsection{Turnaround Time Prediction}
+
+Turnaround time prediction in pre-tactical mode demonstrated the highest predictability among all evaluated tasks, with real-data models achieving R² values between 0.27-0.44 (Figure~\ref{fig:turnaround_pre_r2}). This performance likely reflects the more deterministic nature of turnaround processes compared to delay propagation. While external factors certainly influence turnaround times, the core processes—passenger deplaning, cleaning, catering, fueling, and boarding—follow more predictable patterns based on aircraft type, airport facilities, and scheduled timing.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{plots/turnaround_min_pre-tactical/turnaround_min_pre-tactical_r2.pdf}
+    \caption{Coefficient of determination (R²) for pre-tactical turnaround time prediction across different models and synthetic data generators.}
+    \label{fig:turnaround_pre_r2}
+\end{figure}
+
+The error metrics revealed pronounced performance differences between synthetic generators (Figures~\ref{fig:turnaround_pre_rmse} and \ref{fig:turnaround_pre_mae}). REaLTabFormer achieved RMSE values within 3\% of real-data baselines, demonstrating preservation of the predictive relationships between scheduled characteristics and turnaround requirements. TabSyn followed closely, while CTGAN showed moderate degradation and Gaussian Copula exhibited substantial performance gaps.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\linewidth]{plots/turnaround_min_pre-tactical/turnaround_min_pre-tactical_rmse.pdf}
+        \caption{Root Mean Squared Error}
+        \label{fig:turnaround_pre_rmse}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\linewidth]{plots/turnaround_min_pre-tactical/turnaround_min_pre-tactical_mae.pdf}
+        \caption{Mean Absolute Error}
+        \label{fig:turnaround_pre_mae}
+    \end{subfigure}
+    \caption{Prediction error metrics for pre-tactical turnaround time across models and synthetic data generators.}
+\end{figure}
+
+The utility score analysis confirmed turnaround prediction as the most successful application of synthetic data (Figure~\ref{fig:turnaround_pre_utility}). REaLTabFormer achieved a utility score of 0.97, followed by TabSyn at 0.93. These high scores indicate that for the critical operational task of turnaround planning, synthetic data can serve as an effective substitute for proprietary operational records, enabling advanced analytics capabilities for organizations without access to comprehensive historical datasets.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{plots/turnaround_min_pre-tactical/turnaround_min_pre-tactical_avg_utility.pdf}
+    \caption{Average utility scores for pre-tactical turnaround time prediction across synthetic data generators.}
+    \label{fig:turnaround_pre_utility}
+\end{figure}
+
+Feature importance analysis revealed that scheduled hour/Duration and airport identifiers emerged as the dominant predictors across all data sources (Figure~\ref{fig:turnaround_pre_features}). This pattern aligns with operational knowledge: turnaround processes exhibit significant time-of-day variations due to staffing levels, gate availability, and passenger flow patterns. Airport-specific effects capture differences in terminal layouts, ground handling procedures, and infrastructure constraints that systematically influence turnaround efficiency.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{plots/turnaround_min_pre-tactical/feature_importances/turnaround_min_pre-tactical_all_models_feature_comparison.pdf}
+    \caption{Feature importance comparison for pre-tactical turnaround time prediction averaged across all models.}
+    \label{fig:turnaround_pre_features}
+\end{figure}
+
+The feature importance alignment (Figure~\ref{fig:turnaround_pre_alignment}) shows that  REaLTabFormer and TabSyn achieved perfect alignment scores (1.00), ensuring that models trained on their synthetic data identify precisely the same operational drivers as real-data models. This preservation of causal relationships is crucial for operational applications where understanding which factors drive turnaround variations is as important as prediction accuracy itself.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{plots/turnaround_min_pre-tactical/turnaround_min_pre-tactical_avg_alignment_score.pdf}
+    \caption{Average feature importance alignment scores for pre-tactical turnaround time prediction.}
+    \label{fig:turnaround_pre_alignment}
+\end{figure}
+
+\subsection{Cross-Task Performance Analysis}
+
+Analyzing results across all pre-tactical prediction tasks reveals several critical patterns that inform both synthetic data selection and operational expectations:
+
+\textbf{Consistent Generator Hierarchy:} Across all tasks, the performance ranking remained stable: REaLTabFormer (94-97\% utility) $>$ TabSyn (64-93\%) $>$ CTGAN (60-74\%) $>$ Gaussian Copula (55-68\%). This consistency suggests fundamental differences in how each approach captures the complex relationships present in aviation operational data.
+
+
+\textbf{Feature Relationship Preservation:} Advanced generators (REaLTabFormer, TabSyn) consistently preserved feature importance patterns across all tasks, while simpler methods showed task-dependent degradation. This preservation is crucial for operational deployment, where understanding causal relationships guides resource allocation and process improvement decisions.
+
+\textbf{Fundamental Predictability Limits:} Even with real data, pre-tactical R² values peaked at 0.44 (turnaround), 0.36 (departure delay), and 0.34 (arrival delay). These ceilings reflect inherent uncertainty in aviation operations and should inform realistic expectations for any predictive system, regardless of data source.
+
+\subsection{Operational Implications}
+
+These findings carry significant implications for aviation stakeholders:
+
+\textbf{Strategic Planning Viability:} The high utility scores (94-97\%) achieved by REaLTabFormer indicate that synthetic data can effectively support critical pre-tactical decisions including crew scheduling, gate planning, and resource allocation made hours to days in advance. This capability could democratize advanced analytics across the industry.
+
+\textbf{Research and Development Acceleration:} Preserved feature relationships make synthetic data valuable for algorithm development and benchmarking, allowing researchers to prototype pre-tactical prediction methods without accessing proprietary operational schedules. This could accelerate innovation in aviation analytics.
+
+\textbf{Realistic Expectation Setting:} The modest R² values achieved even with real data highlight inherent uncertainties in pre-tactical prediction. Organizations should design planning processes that accommodate this uncertainty through robust buffers and contingency mechanisms rather than expecting precise predictions.
+
+\textbf{Generator Selection Guidelines:} 
+\begin{itemize}
+    \item Use REaLTabFormer when prediction accuracy and feature relationship preservation are critical
+    \item Consider TabSyn for applications requiring good performance with faster training times
+    \item Reserve CTGAN for rapid prototyping scenarios where moderate accuracy loss is acceptable
+    \item Limit Gaussian Copula to simple analyses focused primarily on marginal distributions
+\end{itemize}
+
+
+
+
+
+\section{Conclusion}
+
+This study demonstrates that high-quality synthetic flight data can effectively substitute for real operational data in pre-tactical prediction tasks. Advanced generators, particularly REaLTabFormer, achieve 95-97\% of real-data performance while preserving critical feature relationships. However, our results also highlight fundamental predictability limits in pre-tactical scenarios—even with perfect data, uncertainty in flight operations restricts prediction accuracy.
+These findings support the operational deployment of synthetic data for strategic planning, research, and algorithm development in aviation. Organizations can leverage synthetic data to develop and validate pre-tactical prediction models without accessing sensitive operational records, democratizing advanced analytics capabilities across the industry. As the aviation industry continues to emphasize data-driven decision-making, high-fidelity synthetic data offers a pathway to broader participation in operational optimization while maintaining commercial confidentiality.
+
+
+\section*{Acknowledgment}
+
+This paper is based on research conducted within the SynthAIr project, which has received funding from the SESAR Joint Undertaking under the European Union’s Horizon Europe research and innovation program (grant agreement No. 101114847). The views and opinions expressed in this paper are solely those of the authors and do not necessarily reflect those of the European Union or the SESAR 3 Joint Undertaking. Neither the European Union nor the SESAR 3 Joint Undertaking can be held responsible for any use of the information contained herein.
+
+
+\balance
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+
+
+
+\end{document}
