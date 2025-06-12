@@ -148,7 +148,7 @@ C_\theta(u_1, u_2, \ldots, u_d) = \Phi_\theta(\Phi^{-1}(u_1), \Phi^{-1}(u_2), \l
 
 where $\Phi_\theta$ is the joint CDF of a multivariate normal distribution with correlation matrix $\theta$, and $\Phi^{-1}$ is the inverse standard normal CDF. We combined this with Kernel Density Estimation (KDE) for marginal distributions.
 
-\subsubsection{Conditional Tabular GAN (CTGAN)}
+\subsubsection{Conditional Tabular GAN (CTGAN)} \cite{xu2019modeling}
 A generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
 \begin{itemize}
     \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
@@ -157,7 +157,7 @@ A generative adversarial network specifically designed for mixed-type tabular da
     \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
 \end{itemize}
 
-\subsubsection{TabSyn}
+\subsubsection{TabSyn} \cite{zhang2024mixed}
 A two-stage approach combining Variational Autoencoders (VAE) with diffusion models:
 \begin{enumerate}
     \item \textbf{Stage 1 - VAE Training}: Learns continuous latent representations of mixed-type data using:
@@ -168,7 +168,7 @@ A two-stage approach combining Variational Autoencoders (VAE) with diffusion mod
     \item \textbf{Stage 2 - Diffusion in Latent Space}: Applies score-based diffusion to generate new latent vectors, requiring only 20-50 reverse steps compared to thousands in traditional diffusion
 \end{enumerate}
 
-\subsubsection{REaLTabFormer}
+\subsubsection{REaLTabFormer} \cite{solatorio2023realtabformer}
 A transformer-based model that treats each table row as a sequence of tokens. The architecture leverages:
 \begin{itemize}
     \item \textbf{GPT-2 backbone}: 6 decoder layers with 768-dimensional embeddings
