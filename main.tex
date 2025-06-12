@@ -94,25 +94,6 @@ Through this analysis, we demonstrate that high-quality synthetic data can serve
 
 
 
-
-\section{Background }
-
-\subsection{ Pre-tactical Operational Prediction in Aviation}
-Pre-tactical prediction in aviation refers to forecasts made hours to days before actual operations, relying primarily on scheduled information rather than real-time data. This prediction horizon is crucial for strategic decision-making but presents unique challenges due to the absence of current operational status.
-Aircraft turnaround time—the duration between arrival and subsequent departure—affects gate utilization and network efficiency. In pre-tactical scenarios, predictions must rely on scheduled times, historical patterns, and known characteristics like aircraft type and airports, without access to actual delay information or current conditions.
-Similarly, predicting departure and arrival delays in pre-tactical mode requires inferring likely disruptions based solely on scheduled patterns, seasonal trends, and historical performance. The absence of real-time information about weather conditions, air traffic flow, or technical issues makes these predictions inherently uncertain.
-Previous research has demonstrated the challenges in pre-tactical predictions. The complexity of flight operations, combined with numerous external factors not captured in schedules, creates inherent limitations in predictability. Understanding these limitations is crucial for setting realistic expectations for both real and synthetic data performance.
-
-
-\subsection{Synthetic Data in Pre-tactical Prediction}
-
-The Train on Synthetic, Test on Real (TSTR) paradigm evaluates whether models trained exclusively on synthetic data can generalize to real-world scenarios. In pre-tactical prediction, this approach faces unique challenges: synthetic generators must capture not only the statistical properties of scheduled operations but also the latent patterns that indicate future delays or extended turnarounds.
-The effectiveness of TSTR in pre-tactical scenarios depends critically on the synthetic generator's ability to preserve complex inter-feature dependencies that exist in scheduled data. While scheduled times might appear deterministic, patterns such as airport congestion during peak hours, carrier-specific operational characteristics, and route-dependent factors create predictable variations that sophisticated models can exploit.
-
-\subsection{Evaluation Challenges}
-Assessing synthetic data quality for pre-tactical tasks requires specialized evaluation approaches. Traditional metrics focusing on distributional similarity may miss crucial predictive relationships that only manifest when attempting to forecast future operations from scheduled information. This necessitates task-specific evaluation frameworks that measure both raw predictive performance and the preservation of feature relationships that domain experts recognize as operationally significant.
-
-
 \section{Related Work}
 
 Pre-tactical prediction in aviation has received increasing attention as airlines seek to improve operational planning. De Falco et al.  \cite{de2023probabilistic} developed probabilistic ML models for turnaround time prediction at major European hubs, achieving mean absolute errors of 7-9 minutes in strategic (pre-tactical) phase. Their work demonstrated that even with limited scheduled information, meaningful predictions are possible through careful feature engineering and model selection.
