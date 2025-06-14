@@ -140,34 +140,26 @@ While substantial progress has been made in both flight delay prediction and syn
 \section{Methodology}
 
 \subsection{Dataset}
-We utilized flight operations data from OAG's Flight Info Direct database, covering European flights from March, June, September, and December 2019. After cleaning and filtering for completed flights (state = ``InGate''), we obtained a dataset encompassing over 1.3 million flight records with comprehensive operational features. For pre-tactical prediction, we focused exclusively on features available at schedule publication time:
 
+The data used in this paper was obtained from OAG's Flight Info Direct – Status Summary database\footnote{‘Status Direct: Data Fields Explained’. Accessed: June 14, 2025. [Online]. Available: \url{https://knowledge.oag.com/docs/status-direct-data-fields-explained}} , covering European flight operations for four selected months of 2019 (March, June, September, and December). After cleaning and filtering for completed flights, we obtained a dataset encompassing over 1.3 million flight records with comprehensive operational features. For pre-tactical prediction, we focused exclusively on features available at schedule publication time:
 \begin{itemize}
-    \item \textbf{Scheduled Information}: Departure/arrival times (UTC), airports (IATA codes), and planned flight duration
-    \item \textbf{Operational Characteristics}: Carrier code, aircraft type (IATA code), and flight number
-    \item \textbf{Temporal Features}: Month, day of week, scheduled hour, and scheduled minute extracted from departure time
-    \item \textbf{Prediction targets}: We set the actual delays and turnaround times as prediction targets, that were execluded from input features in pre-tactical mode. 
+    \item Scheduled Information: Departure/arrival times, airports, and planned flight duration
+    \item Operational Characteristics: Carrier code, aircraft type, and aircraft registration
+    \item Temporal Features: Month, day of week, scheduled hour, and scheduled minute extracted from departure time
+    \item Prediction targets: We set the actual delays and turnaround times as prediction targets, that were execluded from input features in pre-tactical mode. 
 \end{itemize}
 
-\subsubsection{Data Preprocessing Pipeline}
-The preprocessing pipeline involved several critical steps to ensure data quality and consistency:
-
+The preprocessing pipeline involved several steps to ensure data quality and consistency:
 \begin{enumerate}
-    \item \textbf{Initial Filtering}: Records were filtered to include only completed flights with full operational timelines
-    \item \textbf{Feature Selection}: From 70+ original columns, we selected features based on their availability at schedule time and relevance to prediction tasks
-    \item \textbf{Time Standardization}: 
-    \begin{itemize}
-        \item Datetime columns were converted to proper datetime objects
-        \item Time zone offsets between local and UTC times were calculated and applied
-        \item All timestamps were standardized to UTC for consistency
-    \end{itemize}
-    \item \textbf{Target Variable Calculation}:
+    \item Initial Filtering: Records were filtered to include only completed flights with full operational timelines
+    \item Feature Selection: From 70+ original columns, we selected features based on their availability at schedule time and relevance to prediction tasks
+    \item Target Variable Calculation:
     \begin{itemize}
         \item Departure delay: $\text{DEP}_{\text{delay}} = \text{AOBT} - \text{SOBT}$
         \item Arrival delay: $\text{ARR}_{\text{delay}} = \text{AIBT} - \text{SIBT}$
         \item Turnaround time: For each aircraft (matched by registration), $\text{TAT} = \text{AOBT}_{\text{next}} - \text{AIBT}_{\text{current}}$
     \end{itemize}
-    \item \textbf{Data Splitting}: 80/20 train-test split with fixed random seed for reproducibility
+    \item Data Splitting: 80/20 train-test split with fixed random seed for reproducibility
 \end{enumerate}
 
 \subsection{Synthetic Data Generation}
