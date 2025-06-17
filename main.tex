@@ -66,7 +66,8 @@ Synthetic Data, Air Traffic Management (ATM), Flight Delay Prediction, Turnaroun
 \section{Introduction}
 
 
-The aviation industry generates substantial operational data that could be valuable for optimizing flight operations, improving resource allocation, and enhancing passenger experience. However, access to this data is often restricted due to commercial sensitivity, privacy regulations, and competitive considerations. Airlines typically guard their operational data as commercially sensitive and proprietary, concerned that disclosure could affect their competitive strategies \cite{majumder2025dgca}. Additionally, data protection laws such as GDPR and security concerns create tensions between data openness and privacy protection \cite{lei2025fedmeta}. This limited access affects external researchers, smaller airlines, and emerging markets that lack the historical datasets needed for developing predictive analytics.
+The aviation industry generates substantial operational data that could be valuable for optimizing flight operations, improving resource allocation, and enhancing passenger experience. However, access to this data is often restricted due to commercial sensitivity, privacy regulations, and competitive considerations. Airlines typically guard their operational data as commercially sensitive and proprietary, concerned that disclosure could affect their competitive strategies.%\cite{majumder2025dgca}. 
+Additionally, data protection laws such as GDPR and security concerns create tensions between data openness and privacy protection \cite{lei2025fedmeta}. This limited access affects external researchers, smaller airlines, and emerging markets that lack the historical datasets needed for developing predictive analytics.
 
 
 The challenge of data scarcity is particularly relevant in pre-tactical flight operations—the period hours to days before actual flights when airlines, airports, and passengers must make decisions based on anticipated conditions. Unlike tactical predictions made on the day of operations with real-time updates, pre-tactical models must rely primarily on published schedules and historical patterns \cite{dalmau2024probabilistic}. While tactical models can incorporate live weather updates, air traffic flow restrictions, and current aircraft positions, pre-tactical predictions operate with more limited information where only scheduled characteristics and statistical patterns are available \cite{mas2022pre}.
@@ -156,13 +157,44 @@ We applied an 80/20 train-test split (1,395,733/348,934 flights) with fixed rand
 Four state-of-the-art synthetic data generators were evaluated, each representing different technical approaches to capturing the complex relationships in flight data:
 
 \subsubsection{Gaussian Copula (GC)}
-A statistical approach that models dependencies through copula functions while preserving marginal distributions. For random variables $X_1, X_2, \ldots, X_d$ with marginal CDFs $F_1, F_2, \ldots, F_d$, the Gaussian copula is defined as:
+A statistical approach that models multivariate dependencies by separating marginal distributions from their dependence structure. This method is particularly suited for mixed-type tabular data, handling both categorical (airports, carriers, aircraft types) and continuous (delays, turnaround times) variables through a unified framework.
 
+The Gaussian copula model operates in two stages:
+
+\textbf{Marginal Distribution Fitting:} For each variable $X_i$ in the dataset, we fit an appropriate univariate distribution. For continuous variables, the implementation employs a flexible selection mechanism that evaluates multiple candidate distributions (e.g., Gaussian, exponential, beta) using the Kolmogorov-Smirnov test, automatically selecting the best-fitting model. Categorical variables are encoded using ordinal encoding, preserving their discrete nature while enabling numerical processing.
+
+\textbf{Dependency Modeling:} After fitting marginals, we transform each variable to the standard normal domain using:
 \begin{equation}
-C_\theta(u_1, u_2, \ldots, u_d) = \Phi_\theta(\Phi^{-1}(u_1), \Phi^{-1}(u_2), \ldots, \Phi^{-1}(u_d))
+Z_i = \Phi^{-1}(F_i(X_i))
 \end{equation}
+where $F_i$ is the fitted CDF for variable $i$ and $\Phi^{-1}$ is the inverse standard normal CDF. The transformation clips extreme values to $[\epsilon, 1-\epsilon]$ to ensure numerical stability.
 
-where $\Phi_\theta$ is the joint CDF of a multivariate normal distribution with correlation matrix $\theta$, and $\Phi^{-1}$ is the inverse standard normal CDF. We combined this with Kernel Density Estimation (KDE) for marginal distributions.
+The correlation structure is then captured by computing the correlation matrix $\mathbf{R}$ of the transformed variables $\{Z_1, ..., Z_d\}$. For random variables $X_1, X_2, \ldots, X_d$ with marginal CDFs $F_1, F_2, \ldots, F_d$, let $u_i = F_i(X_i)$ represent the probability integral transforms. The joint distribution is then modeled using the Gaussian copula:
+\begin{equation}
+C_{\mathbf{R}}(u_1, ..., u_d) = \Phi_{\mathbf{R}}(\Phi^{-1}(u_1), ..., \Phi^{-1}(u_d))
+\end{equation}
+where $\Phi_{\mathbf{R}}$ represents the CDF of a multivariate normal distribution with correlation matrix $\mathbf{R}$.
+
+
+\textbf{Synthetic Data Generation:} To generate new samples:
+\begin{enumerate}
+    \item Sample $\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})$ from the multivariate normal
+    \item Transform to uniform: $u_i = \Phi(z_i)$ for each component
+    \item Apply inverse marginal CDFs: $x_i = F_i^{-1}(u_i)$
+    \item For categorical variables, round to nearest valid category index and decode
+\end{enumerate}
+
+This approach preserves parametrically-fitted marginal distributions while capturing linear correlations between variables. However, it may struggle with complex non-linear dependencies and rare event combinations that are particularly important in aviation operations.
+
+
+% \subsubsection{Gaussian Copula (GC)}
+% A statistical approach that models dependencies through copula functions while preserving marginal distributions. For random variables $X_1, X_2, \ldots, X_d$ with marginal CDFs $F_1, F_2, \ldots, F_d$, the Gaussian copula is defined as:
+
+% \begin{equation}
+% C_\theta(u_1, u_2, \ldots, u_d) = \Phi_\theta(\Phi^{-1}(u_1), \Phi^{-1}(u_2), \ldots, \Phi^{-1}(u_d))
+% \end{equation}
+
+% where $\Phi_\theta$ is the joint CDF of a multivariate normal distribution with correlation matrix $\theta$, and $\Phi^{-1}$ is the inverse standard normal CDF. We combined this with Kernel Density Estimation (KDE) for marginal distributions.
 
 \subsubsection{Conditional Tabular GAN (CTGAN)} \cite{xu2019modeling}
 A generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
