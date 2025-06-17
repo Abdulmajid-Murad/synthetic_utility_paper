@@ -97,10 +97,11 @@ Our evaluation examines both predictive performance and the preservation of feat
 
 Using over 1.7 million European flight records, our analysis contributes:
 \begin{itemize}
-\item An evaluation framework designed for assessing synthetic data utility in pre-tactical aviation contexts, accounting for limited feature availability and operational uncertainty.
+\item An evaluation framework for assessing synthetic data utility in pre-tactical aviation contexts, accounting for limited feature availability and operational uncertainty.
 \item Quantitative analysis of performance differences when substituting synthetic for real training data across multiple operational prediction tasks, finding that transformer-based methods can retain 94-97\% of real-data predictive performance.
 \item Identification of synthetic generation approaches that preserve predictive relationships when operational information is limited, with REaLTabFormer demonstrating consistent performance in maintaining feature importance patterns.
-\item Baseline expectations for predictability limits in pre-tactical scenarios, showing that even with real data, R² values typically remain below 0.44, providing context for operational planning regardless of data source.
+\item An open-source implementation of the used generative models and evaluation pipeline, making the methods accessible for further research and benchmarking.\footnote{Code available at: \href{https://github.com/SynthAIr/syntabair}{https://github.com/SynthAIr/syntabair}}
+% \item Baseline expectations for predictability limits in pre-tactical scenarios, showing that even with real data, R² values typically remain below 0.44, providing context for operational planning regardless of data source.
 \end{itemize}
 
 
