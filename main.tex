@@ -54,7 +54,7 @@
 
 \begin{abstract}
 
-    Access to comprehensive flight operations data remains severely restricted in aviation due to commercial sensitivity and competitive considerations, hindering the development of predictive models for operational planning. This paper investigates whether synthetic data can effectively replace real operational data for training machine learning models in pre-tactical aviation scenarios—predictions made hours to days before operations using only scheduled flight information. We evaluate four state-of-the-art synthetic data generators on three prediction tasks: aircraft turnaround time, departure delays, and arrival delays. Using a Train on Synthetic, Test on Real (TSTR) methodology on over 1.3 million European flight records, we assess both predictive performance and the preservation of operational relationships. Our results show that transformer-based synthetic data generators can retain 94-97\% of real-data predictive performance while maintaining feature importance patterns informative for operational decision-making. We also quantify fundamental predictability limits in pre-tactical scenarios, highlighting inherent operational uncertainties. These findings suggest that high-quality synthetic data can enable broader access to aviation analytics capabilities while preserving commercial confidentiality, though stakeholders must maintain realistic expectations about pre-tactical prediction accuracy given the stochastic nature of flight operations.
+    Access to comprehensive flight operations data remains severely restricted in aviation due to commercial sensitivity and competitive considerations, hindering the development of predictive models for operational planning. This paper investigates whether synthetic data can effectively replace real operational data for training machine learning models in pre-tactical aviation scenarios—predictions made hours to days before operations using only scheduled flight information. We evaluate four state-of-the-art synthetic data generators on three prediction tasks: aircraft turnaround time, departure delays, and arrival delays. Using a Train on Synthetic, Test on Real (TSTR) methodology on over 1.7 million European flight records, we assess both predictive performance and the preservation of operational relationships. Our results show that transformer-based synthetic data generators can retain 94-97\% of real-data predictive performance while maintaining feature importance patterns informative for operational decision-making. We also quantify fundamental predictability limits in pre-tactical scenarios, highlighting inherent operational uncertainties. These findings suggest that high-quality synthetic data can enable broader access to aviation analytics capabilities while preserving commercial confidentiality, though stakeholders must maintain realistic expectations about pre-tactical prediction accuracy given the stochastic nature of flight operations.
 
 
 \end{abstract}
@@ -65,53 +65,36 @@ Synthetic Data, Air Traffic Management (ATM), Flight Delay Prediction, Turnaroun
 
 \section{Introduction}
 
-% Air traffic management systems generate vast amounts of operational data critical for optimizing airline operations, airport resource allocation, and passenger experience. However, access to this data is severely restricted due to commercial sensitivity, privacy regulations, and competitive considerations. Airlines often deem granular operational data "commercially sensitive and proprietary," fearing that sharing it could harm their competitive strategy \cite{majumder2025dgca}. Similarly, strict data protection laws, such as GDPR, and security concerns impose heavy restrictions on data sharing, creating a trade-off between openness and privacy \cite{lei2025fedmeta}. As a result, critical aviation datasets remain siloed, preventing external researchers and smaller stakeholders from obtaining rich historical data. This scarcity presents a practical challenge, as developing robust machine learning models for operational prediction requires comprehensive historical datasets that many organizations cannot access.
 
 The aviation industry generates substantial operational data that could be valuable for optimizing flight operations, improving resource allocation, and enhancing passenger experience. However, access to this data is often restricted due to commercial sensitivity, privacy regulations, and competitive considerations. Airlines typically guard their operational data as commercially sensitive and proprietary, concerned that disclosure could affect their competitive strategies \cite{majumder2025dgca}. Additionally, data protection laws such as GDPR and security concerns create tensions between data openness and privacy protection \cite{lei2025fedmeta}. This limited access affects external researchers, smaller airlines, and emerging markets that lack the historical datasets needed for developing predictive analytics.
 
-% Among the various predictive tasks in aviation, pre-tactical prediction—forecasting operational metrics hours to days before actual operations—exemplifies both the value and challenge of working with limited data access. Unlike tactical predictions made on the day of operations with real-time updates, pre-tactical models must rely solely on published schedules and historical patterns \cite{dalmau2024probabilistic}. This constraint makes pre-tactical prediction particularly sensitive to data availability: without access to comprehensive historical records showing how scheduled operations translated into actual performance, organizations cannot develop even baseline predictive capabilities. Yet these predictions provide crucial value across the aviation ecosystem. Airlines leverage pre-tactical forecasts to proactively adjust operations—swapping aircraft, reassigning crew, or modifying schedules to prevent disruptions before they cascade through the network \cite{mas2022pre}. Airports optimize resource allocation by anticipating gate requirements and staffing needs based on expected delays and turnaround times. For passengers, advance warning of likely delays enables informed decisions about connections and travel arrangements, reducing the impact of disruptions \cite{carvalho2021relevance}. The paradox is clear: those who could most benefit from pre-tactical predictions—smaller airlines, emerging markets, and academic researchers—are precisely those least likely to have access to the extensive historical datasets required to develop them.
 
 The challenge of data scarcity is particularly relevant in pre-tactical flight operations—the period hours to days before actual flights when airlines, airports, and passengers must make decisions based on anticipated conditions. Unlike tactical predictions made on the day of operations with real-time updates, pre-tactical models must rely primarily on published schedules and historical patterns \cite{dalmau2024probabilistic}. While tactical models can incorporate live weather updates, air traffic flow restrictions, and current aircraft positions, pre-tactical predictions operate with more limited information where only scheduled characteristics and statistical patterns are available \cite{mas2022pre}.
 
 Despite these information constraints, pre-tactical predictions can provide value across the aviation ecosystem. Airlines use these forecasts to adjust operations—modifying aircraft assignments, crew schedules, or flight times before disruptions propagate through their networks \cite{mas2022pre}. Airports utilize predictions to plan gate requirements and staffing needs based on expected delays and turnaround times \cite{de2023probabilistic}. For passengers, advance notice of potential delays can inform decisions about connections and travel arrangements \cite{carvalho2021relevance}. However, organizations with limited access to historical data—including smaller airlines, regional airports, and academic researchers—face challenges in developing these predictive capabilities.
 
 
-% The complexity of pre-tactical prediction stems from the numerous factors that influence actual operations but remain unknown at schedule publication time. Weather conditions, air traffic flow restrictions, technical issues, crew availability, apacity constraints, and cascading delays from earlier flights all contribute to deviations from scheduled operations \cite{carvalho2021relevance}. For aircraft turnaround time—the period between arrival and subsequent departure—predictions must account for passenger deplaning, cleaning, catering, fueling, and boarding processes that vary by aircraft type, airport infrastructure, and time of day. Similarly, departure and arrival delay predictions must infer likely disruptions based solely on historical patterns and scheduled characteristics, without access to current operational status.
-
-% This inherent uncertainty creates two interconnected challenges. First, even with access to comprehensive historical data, pre-tactical predictions face fundamental accuracy limitations due to the stochastic nature of aviation operations \cite{dalmau2024probabilistic}. Second, the restricted availability of operational data prevents many organizations from developing even moderately accurate predictive models. Smaller airlines, emerging markets, and academic researchers often lack the extensive historical datasets required to train machine learning models, limiting their ability to optimize operations and conduct research.
-
 The uncertainty in pre-tactical prediction stems from various factors that influence actual operations but remain unknown at schedule publication time. Weather conditions, air traffic congestion, technical issues, crew availability, airport capacity constraints, and cascading delays from earlier flights all contribute to deviations from scheduled operations \cite{carvalho2021relevance}. For aircraft turnaround time—the period between arrival and subsequent departure—predictions must account for ground processes including passenger handling, cleaning, catering, fueling, and maintenance, each varying by aircraft type, airport infrastructure, and time of day \cite{de2023probabilistic}. Similarly, departure and arrival delay predictions must infer potential disruptions based on historical patterns and scheduled characteristics, without access to current operational status.
 
 This operational complexity presents two related challenges. First, even with comprehensive data access, pre-tactical predictions face accuracy limitations due to the stochastic nature of aviation operations \cite{dalmau2024probabilistic}. Weather patterns, technical failures, and human factors introduce uncertainties that are difficult to capture days in advance. Second, the restricted availability of operational data prevents many organizations from developing baseline predictive models. Without historical records showing how scheduled operations translated into actual performance under various conditions, stakeholders cannot build fundamental predictive capabilities.
 
 
-% Recent advances in synthetic data generation offer a potential approach to addressing the data availability challenge. By creating artificial datasets that preserve the statistical properties of real operations while protecting sensitive information, synthetic data could enable broader access to advanced analytics capabilities. The Train on Synthetic, Test on Real (TSTR) \cite{esteban2017real} paradigm suggests that models trained exclusively on synthetic data can generalize to real-world scenarios, potentially allowing organizations without historical data access to develop operational prediction capabilities.
 
 Recent work in synthetic data generation presents one approach to addressing data availability while respecting commercial confidentiality. By creating artificial datasets that preserve statistical properties and predictive relationships of real operations without exposing sensitive information, synthetic data could enable broader access to analytics capabilities. The Train on Synthetic, Test on Real (TSTR) paradigm \cite{esteban2017real} suggests that models trained on synthetic data can generalize to real-world scenarios, potentially allowing organizations without historical data access to develop operational prediction capabilities. Recent work has shown that synthetic flight data can approximate real data's statistical profiles, with models trained on synthetic data achieving prediction accuracies comparable to those trained on actual data \cite{aly2025synthetic}.
 
-% However, the effectiveness of synthetic data for pre-tactical prediction remains an open question. The unique challenges of pre-tactical scenarios—where predictive relationships are subtle and embedded in complex interactions between scheduled features—require careful evaluation beyond traditional distributional similarity metrics. A key consideration is whether synthetic data can preserve not only the statistical properties of flight operations but also the latent patterns that enable prediction of future delays and extended turnarounds from limited scheduled information.
 
 However, the effectiveness of synthetic data for pre-tactical aviation prediction requires further investigation. The challenges of pre-tactical scenarios—where predictive relationships are embedded in complex interactions between limited scheduled features—require evaluation beyond traditional distributional similarity metrics. An important consideration is whether synthetic data can preserve not only the statistical properties of flight operations but also the latent patterns that enable prediction of future delays and extended turnarounds from scheduled information.
 
-% This study examines the effectiveness of synthetic flight data utility across three pre-tactical prediction tasks: aircraft turnaround time, departure delays, and arrival delays. We assess four state-of-the-art synthetic data generation approaches—Gaussian Copula (statistical modeling), Conditional Tabular GAN (adversarial learning), TabSyn (diffusion-based synthesis), and REaLTabFormer (transformer architecture)—examining their effectiveness in preserving the complex relationships necessary for operational forecasting when only scheduled information is available.
 
 This study evaluates the utility of synthetic flight data across three pre-tactical prediction tasks: aircraft turnaround time, departure delays, and arrival delays. We assess four synthetic data generation approaches—Gaussian Copula (statistical modeling), Conditional Tabular GAN (adversarial learning) \cite{xu2019modeling}, TabSyn (diffusion-based synthesis) \cite{zhang2024mixed}, and REaLTabFormer (transformer architecture) \cite{solatorio2023realtabformer}—examining their effectiveness in preserving relationships necessary for operational forecasting when only scheduled information is available.
 
 
-% Our evaluation extends beyond simple performance metrics to examine whether synthetic data maintains the operational insights that domain experts rely upon. We introduce an evaluation framework that measures both raw predictive performance and the preservation of feature relationships, ensuring that models trained on synthetic data not only achieve acceptable accuracy but also identify the correct operational drivers. This is important for practical deployment, where understanding why predictions are made is as valuable as the predictions themselves.
 
 Our evaluation examines both predictive performance and the preservation of feature relationships, aiming to ensure that models trained on synthetic data achieve acceptable accuracy while identifying relevant operational drivers. This is important for practical deployment, where understanding prediction rationale can be as valuable as the predictions themselves.
 
-% Our analysis contributes to the field by:
-% \begin{itemize}
-%     \item Providing an evaluation framework designed for assessing synthetic data utility in pre-tactical aviation contexts, accounting for the unique challenges of limited feature availability and inherent operational uncertainty.
-%     \item Presenting quantitative analysis of performance degradation when substituting synthetic for real training data across multiple operational prediction tasks, revealing consistent patterns in generator effectiveness.
-%     \item Identifying which synthetic generation approaches best preserve predictive relationships when operational information is limited, with transformer-based methods (REaLTabFormer) demonstrating strong performance.
-%     \item Establishing baseline expectations for predictability limits in pre-tactical scenarios, providing realistic benchmarks for operational planning regardless of data source.
-% \end{itemize}
 
 
-Using over 1.3 million European flight records, our analysis contributes:
+Using over 1.7 million European flight records, our analysis contributes:
 \begin{itemize}
 \item An evaluation framework designed for assessing synthetic data utility in pre-tactical aviation contexts, accounting for limited feature availability and operational uncertainty.
 \item Quantitative analysis of performance differences when substituting synthetic for real training data across multiple operational prediction tasks, finding that transformer-based methods can retain 94-97\% of real-data predictive performance.
@@ -119,7 +102,6 @@ Using over 1.3 million European flight records, our analysis contributes:
 \item Baseline expectations for predictability limits in pre-tactical scenarios, showing that even with real data, R² values typically remain below 0.44, providing context for operational planning regardless of data source.
 \end{itemize}
 
-% Through this analysis, we explore whether synthetic data can serve as an effective substitute for proprietary operational records in pre-tactical prediction tasks, with implications for how the aviation industry might approach data sharing, algorithm development, and operational optimization. Our findings have relevance for airlines seeking to benchmark their operations, airports planning capacity expansions, and researchers developing prediction algorithms without access to sensitive operational data.
 
 Through this analysis, we explore whether synthetic data can serve as a practical substitute for proprietary operational records in pre-tactical prediction tasks. Our findings suggest potential pathways for broader access to analytics capabilities across the industry while maintaining commercial confidentiality requirements.
 
@@ -142,57 +124,33 @@ While substantial progress has been made in both flight delay prediction and syn
 
 
 
-% Pre-tactical prediction in aviation has received increasing attention as airlines seek to improve operational planning. 
-
-
-% De Falco et al. \cite{de2023probabilistic} focus on ground operations, building probabilistic ML models to forecast aircraft turnaround times and the final Target Off-Block Time (TOBT) at major airports. They trained models on four European hubs (Prague, Geneva, Stockholm Arlanda, and Rome Fiumicino) and achieved mean absolute errors of ~7-9 minutes for turnaround duration in the strategic/pre-tactical phase, improving to ~4-6 minutes when updated in the tactical phase closer to departure. It also validated predictions against ground-handler records, highlighting real-world benefits like earlier detection of off-block delays.  In the context of pre-tactical planning, this work is novel for focusing on turnaround (a critical contributor to reactionary delays) and for its probabilistic output. (De Falco et al.  \cite{de2023probabilistic} developed probabilistic ML models for turnaround time prediction at major European hubs, achieving mean absolute errors of 7-9 minutes in strategic (pre-tactical) phase. Their work demonstrated that even with limited scheduled information, meaningful predictions are possible through careful feature engineering and model selection. )
-
-
-% Mas-Pujol et al. \cite{mas2022pre} developed a machine-learning approach to predict Air Traffic Flow Management (ATFM) delays for individual flights. Their model first classifies whether a flight will incur ATFM delay (and the cause category) and then predicts the delay duration. This work identified key features (flight timing, airport demand, network demand, weather, etc.) that influence pre-tactical delays, and it demonstrated that data-driven models can quantitatively estimate delay impact before daily operations. This contributes a contrast to earlier simulation or rule-based methods by using historical data to learn delay patterns.
-
-
-% Dalmau et al. \cite{dalmau2024probabilistic} take a probabilistic approach, using quantile regression to predict the distribution of departure and arrival delays in the pre-tactical phase. Focusing on Geneva Airport data, their model is trained on features available days in advance (e.g. airline, aircraft type, scheduled times, even expected passenger counts) and outputs delay percentiles rather than a single point estimate. They show the ML model outperforms a statistical baseline in forecasting these quantiles. Notably, they used Shapley value analysis to interpret feature importance, finding that the expected number of passengers was one of the most influential features on delay predictions- a contrast with other studies that often lacked such granular data. (Dalmau et al. \cite{dalmau2024probabilistic} specifically addressed pre-tactical delay prediction using quantile regression to output probability distributions of delays days in advance. Using only scheduled information enriched with features like airline, aircraft type, and passenger count, they showed significant improvements over statistical baselines, highlighting the value of machine learning approaches in pre-tactical scenarios.)
-
-% Wandelt et al. \cite{wandelt2025flight} provide a comprehensive survey of ~40 recent studies on flight delay prediction. They observe that most works leverage machine learning (random forests, neural networks – including LSTM/RNN and feed-forward nets) to capture key delay factors. Common input features across studies include schedule information for each flight (e.g. planned times), weather conditions, and route distance, underscoring that weather and operational timing are consistently crucial for delay forecasting. They note that despite the effective models proposed in recent years, challenges remain in areas like data quality, feature integration (e.g. how to incorporate network effects), and generalizability of models. In summary, the trend in pre-tactical prediction is toward more data-driven, predictive analytics approaches that either forecast probabilities or make use of broader data sources - moving beyond simpler historical-average or queuing models
-
-% While these studies demonstrate the potential of pre-tactical prediction, they rely on access to comprehensive historical datasets—a luxury not available to many researchers and smaller operators. Our work bridges this gap by investigating whether synthetic data can enable similar predictive capabilities without requiring access to sensitive operational records.
-
-
-
-% Given the proprietary nature of many aviation datasets , researchers are increasingly turning to generative models to create synthetic aviation data. Such synthetic data can augment or replace real operational data for model training and scenario analysis.
-
-% Most of the previous work on synthetic data generation in aviation has focused on trajectory data, which captures the spatial and temporal evolution of aircraft movements. Variational Autoencoders (VAEs) have emerged as a key tool in this domain. For instance, Krauth et al. \cite{krauth2023deep}, Ezzahed et al. \cite{ezzahed2022bringing}, and Krauth et al. \cite{krauth2024advanced} demonstrated the use of VAEs in modeling aircraft trajectories within terminal maneuvering areas. Wijnands et al. \cite{wijnands2024generation} explore Generative Adversarial Networks (GANs), specifically the TimeGAN framework, to create synthetic landing trajectories. Murad and Ruocco \cite{murad2025synthetic} applied vector-quantized VAEs to generate synthetic flight trajectories between pair of airports, demonstrating that synthetic trajectories can effectively capture the statistical properties of real flight data. These studies highlight the potential of generative models to create realistic trajectory data for simulation and analysis, but they focus primarily on spatial trajectories rather than operational records.
-
-% Aly and Sharpanskykh \cite{aly2025synthetic} broaden the scope of synthetic data generation to flight operational records (tabular data) rather than trajectories. Their study aims to generate entire flight datasets - including attributes like flight schedules, aircraft info, delays, etc. However, they only evaluate two generative models: a Tabular Variational Autoencoder (TVAE) and a Gaussian Copula model and used publically available flight data from the Bureau of Transportation Statistics (BTS) covering U.S. domestic flights.
-
-
-
-
-
 \section{Methodology}
 
 \subsection{Dataset}
 
-The data used in this paper was obtained from OAG's Flight Info Direct – Status Summary database\footnote{‘Status Direct: Data Fields Explained’. Accessed: June 14, 2025. [Online]. Available: \url{https://knowledge.oag.com/docs/status-direct-data-fields-explained}} , covering European flight operations for four selected months of 2019 (March, June, September, and December). After cleaning and filtering for completed flights, we obtained a dataset encompassing over 1.3 million flight records with comprehensive operational features. For pre-tactical prediction, we focused exclusively on features available at schedule publication time:
+We utilized OAG's Flight Info Direct Status Summary database\footnote{'Status Direct: Data Fields Explained'. Accessed: June 17, 2025. [Online]. Available: \url{https://knowledge.oag.com/docs/status-direct-data-fields-explained}}, extracting European flight operations from March, June, September, and December 2019. After filtering for completed flights with full operational timelines and valid turnaround observations, we obtained 1,744,667 flight records.
+
+\subsubsection{Feature Selection}
+For pre-tactical prediction, we selected only features available at schedule publication time:
+
+\textbf{Categorical}: IATA carrier code, departure/arrival airports, aircraft type
+
+\textbf{Temporal}: Month, day, hour, minute (extracted from scheduled departure), day of week
+
+\textbf{Operational}: Scheduled flight duration (actual duration excluded in pre-tactical mode)
+
+\subsubsection{Target Variables}
+We computed three operational metrics:
 \begin{itemize}
-    \item Scheduled Information: Departure/arrival times, airports, and planned flight duration
-    \item Operational Characteristics: Carrier code, aircraft type, and aircraft registration
-    \item Temporal Features: Month, day of week, scheduled hour, and scheduled minute extracted from departure time
-    \item Prediction targets: We set the actual delays and turnaround times as prediction targets, that were execluded from input features in pre-tactical mode. 
+    \item \textbf{Departure delay}: $\Delta_{\text{dep}} = t_{\text{AOBT}} - t_{\text{SOBT}}$ (Actual vs. Scheduled Off-Block Time)
+    \item \textbf{Arrival delay}: $\Delta_{\text{arr}} = t_{\text{AIBT}} - t_{\text{SIBT}}$ (Actual vs. Scheduled In-Block Time)
+    \item \textbf{Turnaround time}: Ground time between consecutive flights of the same aircraft at the same airport, constrained to $\leq$ 6 hours to exclude overnight parking
 \end{itemize}
 
-The preprocessing pipeline involved several steps to ensure data quality and consistency:
-\begin{enumerate}
-    \item Initial Filtering: Records were filtered to include only completed flights with full operational timelines
-    \item Feature Selection: From 70+ original columns, we selected features based on their availability at schedule time and relevance to prediction tasks
-    \item Target Variable Calculation:
-    \begin{itemize}
-        \item Departure delay: $\text{DEP}_{\text{delay}} = \text{AOBT} - \text{SOBT}$
-        \item Arrival delay: $\text{ARR}_{\text{delay}} = \text{AIBT} - \text{SIBT}$
-        \item Turnaround time: For each aircraft (matched by registration), $\text{TAT} = \text{AOBT}_{\text{next}} - \text{AIBT}_{\text{current}}$
-    \end{itemize}
-    \item Data Splitting: 80/20 train-test split with fixed random seed for reproducibility
-\end{enumerate}
+The turnaround matching process ensured all records have valid turnaround observations, enabling consistent evaluation across all three prediction tasks. The dataset exhibits mean departure delay of 11.1 minutes ($\sigma$=24.0), mean arrival delay of 7.5 minutes ($\sigma$=25.8), and mean turnaround time of 70.8 minutes ($\sigma$=51.2).
+
+We applied an 80/20 train-test split (1,395,733/348,934 flights) with fixed random seed for reproducibility.
+
 
 \subsection{Synthetic Data Generation}
 Four state-of-the-art synthetic data generators were evaluated, each representing different technical approaches to capturing the complex relationships in flight data:
