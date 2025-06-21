@@ -128,14 +128,23 @@ While substantial progress has been made in both flight delay prediction and syn
 
 \section{Methodology}
 
-Our methodology, illustrated in Figure \ref{fig:framework}, is structured into four sequential phases: Data Preparation, Synthetic Generation, Model Training, and Evaluation. First, we process the raw flight data, selecting only pre-tactical features and splitting the dataset into training and testing sets. Second, the real training data is used to train four different synthetic data generators. Third, we establish two parallel training pipelines: a baseline where predictive models are trained on the real training data (TRTR), and an evaluation pipeline where the same models are trained on the generated synthetic data (TSTR). Finally, we evaluate all trained models on the held-out real test set, comparing their performance on three prediction tasks to assess the utility of the synthetic data.
+Our methodology, illustrated in Figure \ref{fig:framework}, follows a four-phase experimental framework designed to systematically evaluate synthetic data utility for pre-tactical flight prediction. 
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{diagrams/overall_framework.pdf}
-    \caption{The experimental framework, illustrating the four main phases. 1) Real-world flight data is prepared and split. 2) The real training data is used to train four types of synthetic data generators. 3) Five machine learning models are trained in two settings: on the real training data (TRTR baseline) and on each of the synthetic datasets (TSTR). 4) All models are evaluated on the unseen real test data across three prediction tasks using performance, utility, and feature alignment metrics.}
+    \caption{Experimental framework comprising four phases: (1) Data Preparation - processing 1.74M European flight records and extracting pre-tactical features available at schedule publication; (2) Synthetic Generation with Fidelity Assessment - training four generative models and validating statistical properties; (3) Model Training - implementing parallel pipelines for baseline (TRTR) and synthetic data evaluation (TSTR) using five regression algorithms; (4) Evaluation - assessing performance on three operational prediction tasks using multiple metrics.}
     \label{fig:framework}
 \end{figure*}
+
+In Phase 1 (Data Preparation), we process 1.74 million flight records from the OAG dataset, extracting only features available at schedule publication time—categorical variables (carrier, airports, aircraft type), temporal features (month, day, hour, day of week), and operational metrics (scheduled duration). The dataset is split 80/20 for training and testing, with turnaround times constrained to six hours to exclude overnight parking.
+
+Phase 2 (Synthetic Generation and Fidelity) involves training four generative models on the real training data: Gaussian Copula (statistical modeling), CTGAN (adversarial learning), TabSyn (VAE with diffusion), and REaLTabFormer (transformer architecture). Before proceeding to model training, we conduct comprehensive fidelity assessment using statistical similarity metrics, correlation preservation tests, joint distribution analysis, and detection difficulty measures to ensure synthetic data quality.
+
+Phase 3 (Model Training) establishes two parallel pipelines. The baseline pipeline (Train on Real, Test on Real - TRTR) trains five regression models—Decision Tree, Random Forest, Gradient Boosting, XGBoost, and CatBoost—on real training data. The evaluation pipeline (Train on Synthetic, Test on Real - TSTR) trains the same models on each synthetic dataset, enabling direct comparison of predictive performance.
+
+Phase 4 (Evaluation) assesses all trained models on the held-out real test set across three pre-tactical prediction tasks: departure delay, arrival delay, and turnaround time. We employ performance metrics (RMSE, MAE, R²), utility scores quantifying synthetic-to-real performance ratios, and feature importance alignment to ensure models identify the same operational drivers regardless of training data source.
+
 
 \subsection{Dataset}
 
@@ -226,6 +235,52 @@ A transformer-based model that treats each table row as a sequence of tokens. Th
     \item \textbf{Constrained sampling}: Domain-specific token filtering during generation
 \end{itemize}
 
+\subsection{Fidelity Evaluation Metrics}
+
+To ensure synthetic data maintains the statistical properties necessary for reliable downstream analysis, we employ a comprehensive fidelity evaluation framework spanning five complementary dimensions. Each dimension captures different aspects of how well synthetic data reproduces the characteristics of real flight operations.
+
+\subsubsection{Statistical Similarity}
+We assess univariate distributional fidelity using metrics tailored to data type. For continuous variables (e.g., delays, durations), we employ the Kolmogorov-Smirnov (KS) complement:
+\begin{equation}
+\text{KS}_{\text{complement}} = 1 - D_{KS}
+\end{equation}
+where $D_{KS}$ represents the maximum distance between empirical cumulative distribution functions. Values approaching 1.0 indicate near-perfect alignment of continuous distributions.
+
+For categorical variables (e.g., carriers, airports), we apply Pearson's Chi-Squared test, converting p-values to a normalized 0-1 scale where higher values signify better frequency matching between real and synthetic categorical distributions.
+
+\subsubsection{Correlation Preservation}
+Maintaining inter-feature relationships is crucial for operational validity. We evaluate four correlation metrics:
+\begin{itemize}
+    \item \textbf{Pearson correlation}: Captures linear relationships between continuous variables
+    \item \textbf{Spearman and Kendall correlations}: Assess rank-based and ordinal dependencies, respectively
+    \item \textbf{Correlation Matrix Distance}: Measures preservation of global correlation structure using Frobenius norm
+    \item \textbf{Mixed-Type correlation}: Extends analysis across heterogeneous variable pairs using appropriate measures (Pearson's r for numerical-numerical, Cramér's V for categorical-categorical, correlation ratio for mixed pairs)
+\end{itemize}
+
+\subsubsection{Joint Distribution Fidelity}
+Beyond pairwise relationships, we evaluate multivariate distributional alignment through Kullback-Leibler (KL) divergence. For continuous variables, we transform KL divergence to a fidelity score:
+\begin{equation}
+\text{Fidelity}_{\text{continuous}} = \exp(-\text{KL}(p||q))
+\end{equation}
+where $p$ and $q$ represent real and synthetic distributions. We apply analogous measures for discrete variables, assessing how well generators capture complex categorical combinations (e.g., airline-airport pairs).
+
+\subsubsection{Likelihood-Based Assessment}
+We fit probabilistic models to real data and measure the likelihood of synthetic samples under these learned distributions:
+\begin{itemize}
+    \item \textbf{Bayesian Network likelihood}: Evaluates categorical dependencies using directed graphical models learned via the Chow-Liu algorithm
+    \item \textbf{Gaussian Mixture Model likelihood}: Assesses continuous feature distributions as weighted combinations of multivariate Gaussians
+\end{itemize}
+Higher log-likelihood values indicate synthetic data that better conforms to the statistical patterns in real operations.
+
+\subsubsection{Detection Difficulty}
+As a holistic measure of synthetic data quality, we train regularized logistic regression classifiers to distinguish real from synthetic records. The detection score is normalized as:
+\begin{equation}
+\text{Detection Score} = 1 - (\text{AUC} - 0.5) \times 2
+\end{equation}
+where AUC represents the area under the ROC curve. Scores approaching 1.0 indicate synthetic data that is statistically indistinguishable from real data, while lower scores suggest detectable artifacts that may impact downstream applications.
+
+This multi-faceted evaluation ensures synthetic data not only mimics surface-level statistics but preserves the complex interdependencies essential for aviation operational analysis.
+
 \subsection{Pre-tactical Prediction Tasks}
 
 We evaluated three operational prediction scenarios, all in pre-tactical mode where only scheduled information is available:
@@ -312,6 +367,55 @@ We employed five regression algorithms to ensure robust evaluation across differ
 
 
 \section{Results and Discussion}
+
+\subsection{Synthetic Data Fidelity Assessment}
+\label{sec:fidelity_results}
+
+Before evaluating predictive utility, we assessed the statistical fidelity of each synthetic data generator to ensure the generated data maintains essential properties of real flight operations. Table~\ref{tab:fidelity_metrics} presents twelve complementary metrics measuring different aspects of synthetic data quality.
+
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{1pt}
+\renewcommand{\arraystretch}{1.2}
+\caption{Synthetic Data Fidelity Metrics}
+\label{tab:fidelity_metrics}
+\begin{tabular}{lcccc}
+\toprule
+\rowcolor{blue!15}
+\textbf{Metric} & \textbf{GaussianCopula} & \textbf{CTGAN} & \textbf{TabSyn} & \textbf{REaLTabFormer} \\
+\midrule
+\rowcolor{gray!5}
+\textbf{KS Complement} & 0.8779 & 0.9528 & 0.9855 & \textbf{0.9911} \\
+\rowcolor{gray!20}
+\textbf{Chi-Squared Test} & 0.9979 & 1.0000 & 1.0000 & \textbf{1.0000} \\
+\rowcolor{gray!5}
+\textbf{Pearson Correlation} & \textbf{0.9955} & 0.9881 & 0.9925 & 0.9950 \\
+\rowcolor{gray!20}
+\textbf{Spearman Correlation} & 0.9822 & 0.9874 & 0.9962 & \textbf{0.9982} \\
+\rowcolor{gray!5}
+\textbf{Kendall Correlation} & 0.9865 & 0.9902 & 0.9974 & \textbf{0.9987} \\
+\rowcolor{gray!20}
+\textbf{Correlation Matrix} & \textbf{0.9896} & 0.9704 & 0.9790 & 0.9887 \\
+\rowcolor{gray!5}
+\textbf{Mixed-Type Correlation} & 0.9314 & 0.9765 & 0.9854 & \textbf{0.9899} \\
+\rowcolor{gray!20}
+\textbf{Continuous KL Divergence} & 0.7437 & 0.9709 & 0.9966 & \textbf{0.9990} \\
+\rowcolor{gray!5}
+\textbf{Discrete KL Divergence} & 0.2272 & 0.6808 & 0.7981 & \textbf{0.9369} \\
+\rowcolor{gray!20}
+\textbf{BN Log Likelihood} & -18.5829 & -15.0552 & -14.7318 & \textbf{-13.9766} \\
+\rowcolor{gray!5}
+\textbf{GM Log Likelihood} & -42.3439 & -38.9681 & -37.5899 & \textbf{-37.5268} \\
+\rowcolor{gray!20}
+\textbf{Logistic Detection} & 0.0253 & 0.6275 & \textbf{0.8880} & 0.8472 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The results reveal a clear performance hierarchy across generators. REaLTabFormer demonstrates better fidelity across most metrics, particularly in distributional similarity (KS Complement: 0.991) and joint distribution modeling (Discrete KL Divergence: 0.937). TabSyn follows closely, achieving the highest detection difficulty score (0.888), indicating its synthetic data is most challenging to distinguish from real data. CTGAN shows moderate performance across all dimensions, while Gaussian Copula, despite maintaining accurate marginal distributions and correlations, struggles with complex multivariate relationships as evidenced by low KL divergence scores.
+
+All generators successfully preserve correlation structures ($>$0.97 across Pearson, Spearman, and Kendall metrics), which is crucial for maintaining predictive relationships. The high Chi-Squared scores ($\geq$0.998) indicate accurate reproduction of categorical feature distributions across all methods. These fidelity results confirm that the synthetic data maintains sufficient statistical integrity for the subsequent predictive utility evaluation, with REaLTabFormer and TabSyn emerging as the most faithful generators overall.
 
 \subsection{Departure Delay Prediction}
 

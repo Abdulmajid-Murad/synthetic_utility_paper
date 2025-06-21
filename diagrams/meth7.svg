@@ -1,0 +1,370 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 20 1280 490">
+  <defs>
+    <!-- Gradient definitions for visual depth -->
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#EBF5FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DBEAFE;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0FDF4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DCFCE7;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FAF5FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F3E8FF;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF7ED;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFEDD5;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Fidelity gradient -->
+    <linearGradient id="fidelityGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FEFCE8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FEF3C7;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Professional shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.15"/>
+      </feComponentTransfer>
+      <feMerge> 
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/> 
+      </feMerge>
+    </filter>
+
+    <!-- Arrow markers -->
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 L3,4 Z" fill="#374151"/>
+    </marker>
+    
+    <marker id="arrowBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 L3,4 Z" fill="#2563EB"/>
+    </marker>
+
+    <marker id="arrowFidelity" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 L3,4 Z" fill="#D97706"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <!-- <rect width="1500" height="600" fill="#FAFAFA"/> -->
+  
+  <!-- Phase Headers with icons -->
+  <g id="phase-headers">
+    <!-- Phase 1 (content at x=50 → header at x=60) -->
+    <g transform="translate(60, 30)">
+      <rect x="-10" y="-5" width="220" height="40" rx="20" fill="#2563EB" opacity="0.1"/>
+      <circle cx="15" cy="15" r="15" fill="#2563EB"/>
+      <text x="15" y="20" text-anchor="middle" font-size="14" font-weight="bold" fill="white" font-family="Arial, sans-serif">1</text>
+      <text x="120" y="20" text-anchor="middle" font-size="16" font-weight="600" fill="#1E40AF" font-family="Arial, sans-serif">Data Preparation</text>
+    </g>
+    
+    <!-- Phase 2 (content at x=370 → header at x=380) -->
+    <g transform="translate(380, 30)">
+      <rect x="-10" y="-5" width="280" height="40" rx="20" fill="#059669" opacity="0.1"/>
+      <circle cx="15" cy="15" r="15" fill="#059669"/>
+      <text x="15" y="20" text-anchor="middle" font-size="14" font-weight="bold" fill="white" font-family="Arial, sans-serif">2</text>
+      <text x="150" y="20" text-anchor="middle" font-size="16" font-weight="600" fill="#047857" font-family="Arial, sans-serif">Synthetic Generation &amp; Fidelity</text>
+    </g>
+    
+    <!-- Phase 3 (content at x=760 → header at x=770) -->
+    <g transform="translate(770, 30)">
+      <rect x="-10" y="-5" width="200" height="40" rx="20" fill="#7C3AED" opacity="0.1"/>
+      <circle cx="15" cy="15" r="15" fill="#7C3AED"/>
+      <text x="15" y="20" text-anchor="middle" font-size="14" font-weight="bold" fill="white" font-family="Arial, sans-serif">3</text>
+      <text x="105" y="20" text-anchor="middle" font-size="16" font-weight="600" fill="#6D28D9" font-family="Arial, sans-serif">Model Training</text>
+    </g>
+    
+    <!-- Phase 4 (content at x=1090 → header at x=1100) -->
+    <g transform="translate(1100, 30)">
+      <rect x="-10" y="-5" width="180" height="40" rx="20" fill="#EA580C" opacity="0.1"/>
+      <circle cx="15" cy="15" r="15" fill="#EA580C"/>
+      <text x="15" y="20" text-anchor="middle" font-size="14" font-weight="bold" fill="white" font-family="Arial, sans-serif">4</text>
+      <text x="95" y="20" text-anchor="middle" font-size="16" font-weight="600" fill="#C2410C" font-family="Arial, sans-serif">Evaluation</text>
+    </g>
+  </g>
+
+  <!-- Main content areas -->
+  
+  <!-- Phase 1: Data Preparation -->
+  <g transform="translate(50, 90)">
+    <!-- Original Dataset -->
+    <rect x="0" y="0" width="240" height="100" rx="12" fill="url(#blueGrad)" stroke="#2563EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="120" y="25" text-anchor="middle" font-size="15" font-weight="600" fill="#1E40AF" font-family="Arial, sans-serif">OAG Flight Dataset</text>
+    <line x1="20" y1="35" x2="220" y2="35" stroke="#93C5FD" stroke-width="1.5"/>
+    <text x="120" y="55" text-anchor="middle" font-size="12" fill="#1E40AF" font-family="Arial, sans-serif">1.74M European Flights</text>
+    <text x="120" y="72" text-anchor="middle" font-size="11" fill="#3B82F6" font-family="Arial, sans-serif">Mar, Jun, Sep, Dec 2019</text>
+    <text x="120" y="89" text-anchor="middle" font-size="11" fill="#3B82F6" font-family="Arial, sans-serif">Turnaround ≤ 6 hours</text>
+    
+    <!-- Feature Selection -->
+    <rect x="0" y="130" width="240" height="170" rx="12" fill="white" stroke="#2563EB" stroke-width="1.5" stroke-dasharray="8,4" filter="url(#shadow)"/>
+    <text x="120" y="155" text-anchor="middle" font-size="14" font-weight="600" fill="#1E40AF" font-family="Arial, sans-serif">Pre-tactical Features</text>
+    <line x1="20" y1="165" x2="220" y2="165" stroke="#DBEAFE" stroke-width="1"/>
+    
+    <g transform="translate(20, 180)">
+      <rect x="0" y="0" width="200" height="30" rx="6" fill="#EBF5FF"/>
+      <text x="10" y="20" font-size="11" font-weight="500" fill="#1E40AF" font-family="Arial, sans-serif">Categorical: Carrier, Airports, Aircraft</text>
+    </g>
+    
+    <g transform="translate(20, 220)">
+      <rect x="0" y="0" width="200" height="30" rx="6" fill="#EBF5FF"/>
+      <text x="10" y="20" font-size="11" font-weight="500" fill="#1E40AF" font-family="Arial, sans-serif">Temporal: Month, Day, Hour, DoW</text>
+    </g>
+    
+    <g transform="translate(20, 260)">
+      <rect x="0" y="0" width="200" height="30" rx="6" fill="#EBF5FF"/>
+      <text x="10" y="20" font-size="11" font-weight="500" fill="#1E40AF" font-family="Arial, sans-serif">Operational: Scheduled Duration</text>
+    </g>
+    
+    <!-- Train/Test Split -->
+    <rect x="0" y="330" width="240" height="80" rx="12" fill="#2563EB" filter="url(#shadow)"/>
+    <text x="120" y="355" text-anchor="middle" font-size="14" font-weight="600" fill="white" font-family="Arial, sans-serif">80/20 Split</text>
+    <text x="120" y="375" text-anchor="middle" font-size="11" fill="#DBEAFE" font-family="Arial, sans-serif">Train: 1,395,733 flights</text>
+    <text x="120" y="395" text-anchor="middle" font-size="11" fill="#DBEAFE" font-family="Arial, sans-serif">Test: 348,934 flights</text>
+  </g>
+
+  <!-- Phase 2: Synthetic Generation & Fidelity -->
+  <g transform="translate(370, 90)">
+    <!-- Main container - made wider to accommodate fidelity assessment -->
+    <rect x="0" y="0" width="320" height="320" rx="12" fill="url(#greenGrad)" stroke="#059669" stroke-width="2" filter="url(#shadow)"/>
+    <text x="160" y="25" text-anchor="middle" font-size="15" font-weight="600" fill="#047857" font-family="Arial, sans-serif">Synthetic Data Generators</text>
+    <line x1="20" y1="35" x2="300" y2="35" stroke="#6EE7B7" stroke-width="1.5"/>
+    
+    <!-- Generator cards - made narrower to fit fidelity assessment -->
+    <g transform="translate(20, 50)">
+      <!-- Gaussian Copula -->
+      <rect x="0" y="0" width="180" height="55" rx="8" fill="white" stroke="#059669" stroke-width="1"/>
+      <rect x="0" y="0" width="6" height="55" rx="3" fill="#059669"/>
+      <text x="55" y="20" text-anchor="middle" font-size="12" font-weight="600" fill="#047857" font-family="Arial, sans-serif">Gaussian Copula</text>
+      <text x="15" y="38" font-size="9" fill="#059669" font-family="Arial, sans-serif">Statistical modeling</text>
+      <text x="15" y="50" font-size="9" fill="#059669" font-family="Arial, sans-serif">Marginals + correlation</text>
+      
+      <!-- CTGAN -->
+      <rect x="0" y="65" width="180" height="55" rx="8" fill="white" stroke="#059669" stroke-width="1"/>
+      <rect x="0" y="65" width="6" height="55" rx="3" fill="#059669"/>
+      <text x="55" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#047857" font-family="Arial, sans-serif">CTGAN</text>
+      <text x="15" y="103" font-size="9" fill="#059669" font-family="Arial, sans-serif">Adversarial learning</text>
+      <text x="15" y="115" font-size="9" fill="#059669" font-family="Arial, sans-serif">Mode-specific norm.</text>
+      
+      <!-- TabSyn -->
+      <rect x="0" y="130" width="180" height="55" rx="8" fill="white" stroke="#059669" stroke-width="1"/>
+      <rect x="0" y="130" width="6" height="55" rx="3" fill="#059669"/>
+      <text x="55" y="150" text-anchor="middle" font-size="12" font-weight="600" fill="#047857" font-family="Arial, sans-serif">TabSyn</text>
+      <text x="15" y="168" font-size="9" fill="#059669" font-family="Arial, sans-serif">VAE + Diffusion</text>
+      <text x="15" y="180" font-size="9" fill="#059669" font-family="Arial, sans-serif">Latent space approach</text>
+      
+      <!-- REaLTabFormer -->
+      <rect x="0" y="195" width="180" height="55" rx="8" fill="white" stroke="#059669" stroke-width="1"/>
+      <rect x="0" y="195" width="6" height="55" rx="3" fill="#059669"/>
+      <text x="55" y="215" text-anchor="middle" font-size="12" font-weight="600" fill="#047857" font-family="Arial, sans-serif">REaLTabFormer</text>
+      <text x="15" y="233" font-size="9" fill="#059669" font-family="Arial, sans-serif">Transformer arch.</text>
+      <text x="15" y="245" font-size="9" fill="#059669" font-family="Arial, sans-serif">GPT-2 tokenization</text>
+    </g>
+
+    <!-- Fidelity Assessment Box -->
+    <g transform="translate(215, 50)">
+      <rect x="0" y="0" width="100" height="220" rx="8" fill="url(#fidelityGrad)" stroke="#D97706" stroke-width="1.5" filter="url(#shadow)"/>
+      <text x="50" y="18" text-anchor="middle" font-size="11" font-weight="600" fill="#B45309" font-family="Arial, sans-serif">Fidelity</text>
+      <text x="50" y="32" text-anchor="middle" font-size="11" font-weight="600" fill="#B45309" font-family="Arial, sans-serif">Assessment</text>
+      <line x1="10" y1="40" x2="90" y2="40" stroke="#F59E0B" stroke-width="1"/>
+      
+      <!-- Fidelity metrics list -->
+      <g transform="translate(8, 50)">
+        <circle cx="4" cy="4" r="2" fill="#D97706"/>
+        <text x="12" y="8" font-size="8" fill="#B45309" font-family="Arial, sans-serif">KS Complement</text>
+        
+        <circle cx="4" cy="22" r="2" fill="#D97706"/>
+        <text x="12" y="26" font-size="8" fill="#B45309" font-family="Arial, sans-serif">Chi-Squared</text>
+        
+        <circle cx="4" cy="40" r="2" fill="#D97706"/>
+        <text x="12" y="44" font-size="8" fill="#B45309" font-family="Arial, sans-serif">Correlation</text>
+        
+        <circle cx="4" cy="58" r="2" fill="#D97706"/>
+        <text x="12" y="62" font-size="8" fill="#B45309" font-family="Arial, sans-serif">KL Divergence</text>
+        
+        <circle cx="4" cy="76" r="2" fill="#D97706"/>
+        <text x="12" y="80" font-size="8" fill="#B45309" font-family="Arial, sans-serif">BN Likelihood</text>
+        
+        <circle cx="4" cy="94" r="2" fill="#D97706"/>
+        <text x="12" y="98" font-size="8" fill="#B45309" font-family="Arial, sans-serif">GM Likelihood</text>
+        
+        <circle cx="4" cy="112" r="2" fill="#D97706"/>
+        <text x="12" y="116" font-size="8" fill="#B45309" font-family="Arial, sans-serif">Detection</text>
+        
+        <circle cx="4" cy="130" r="2" fill="#D97706"/>
+        <text x="12" y="134" font-size="8" fill="#B45309" font-family="Arial, sans-serif">Mixed-Type</text>
+        
+        <circle cx="4" cy="148" r="2" fill="#D97706"/>
+        <text x="12" y="152" font-size="8" fill="#B45309" font-family="Arial, sans-serif">Joint Dist.</text>
+      </g>
+    </g>
+
+
+    <!-- Curved bracket connecting all generators to fidelity assessment -->
+    <path d="M190,50 Q205,50 205,70 L205,250 Q205,300 190,300" stroke="#D97706" stroke-width="2" fill="none"/>
+    <path d="M205,173 L215,173" stroke="#D97706" stroke-width="1" marker-end="url(#arrowFidelity)" fill="none"/>
+    
+    <!-- Small connection lines from bracket to fidelity -->
+    <circle cx="205" cy="173" r="3" fill="#D97706"/>
+
+  </g>
+
+  <!-- Phase 3: Model Training -->
+  <g transform="translate(760, 90)">
+    <rect x="0" y="0" width="260" height="320" rx="12" fill="url(#purpleGrad)" stroke="#7C3AED" stroke-width="2" filter="url(#shadow)"/>
+    <text x="130" y="25" text-anchor="middle" font-size="15" font-weight="600" fill="#6D28D9" font-family="Arial, sans-serif">Machine Learning Models</text>
+    <line x1="20" y1="35" x2="240" y2="35" stroke="#C4B5FD" stroke-width="1.5"/>
+    
+    <!-- Model cards -->
+    <g transform="translate(20, 50)">
+      <rect x="0" y="0" width="220" height="45" rx="8" fill="white" stroke="#7C3AED" stroke-width="1"/>
+      <rect x="0" y="0" width="6" height="45" rx="3" fill="#7C3AED"/>
+      <text x="110" y="28" text-anchor="middle" font-size="12" font-weight="600" fill="#6D28D9" font-family="Arial, sans-serif">Decision Tree</text>
+      
+      <rect x="0" y="55" width="220" height="45" rx="8" fill="white" stroke="#7C3AED" stroke-width="1"/>
+      <rect x="0" y="55" width="6" height="45" rx="3" fill="#7C3AED"/>
+      <text x="110" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#6D28D9" font-family="Arial, sans-serif">Random Forest</text>
+      
+      <rect x="0" y="110" width="220" height="45" rx="8" fill="white" stroke="#7C3AED" stroke-width="1"/>
+      <rect x="0" y="110" width="6" height="45" rx="3" fill="#7C3AED"/>
+      <text x="110" y="138" text-anchor="middle" font-size="12" font-weight="600" fill="#6D28D9" font-family="Arial, sans-serif">Gradient Boosting</text>
+      
+      <rect x="0" y="165" width="220" height="45" rx="8" fill="white" stroke="#7C3AED" stroke-width="1"/>
+      <rect x="0" y="165" width="6" height="45" rx="3" fill="#7C3AED"/>
+      <text x="110" y="193" text-anchor="middle" font-size="12" font-weight="600" fill="#6D28D9" font-family="Arial, sans-serif">XGBoost</text>
+      
+      <rect x="0" y="220" width="220" height="45" rx="8" fill="white" stroke="#7C3AED" stroke-width="1"/>
+      <rect x="0" y="220" width="6" height="45" rx="3" fill="#7C3AED"/>
+      <text x="110" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#6D28D9" font-family="Arial, sans-serif">CatBoost</text>
+    </g>
+  </g>
+
+  <!-- Phase 4: Evaluation -->
+  <g transform="translate(1090, 90)">
+    <!-- Prediction Tasks -->
+    <rect x="0" y="0" width="220" height="140" rx="12" fill="url(#orangeGrad)" stroke="#EA580C" stroke-width="2" filter="url(#shadow)"/>
+    <text x="110" y="25" text-anchor="middle" font-size="15" font-weight="600" fill="#C2410C" font-family="Arial, sans-serif">Prediction Tasks</text>
+    <line x1="20" y1="35" x2="200" y2="35" stroke="#FDBA74" stroke-width="1.5"/>
+    
+    <g transform="translate(20, 50)">
+      <rect x="0" y="0" width="180" height="25" rx="6" fill="white" stroke="#EA580C" stroke-width="1"/>
+      <circle cx="12" cy="12.5" r="3" fill="#EA580C"/>
+      <text x="25" y="17" font-size="11" fill="#C2410C" font-family="Arial, sans-serif">Departure Delay</text>
+      
+      <rect x="0" y="30" width="180" height="25" rx="6" fill="white" stroke="#EA580C" stroke-width="1"/>
+      <circle cx="12" cy="42.5" r="3" fill="#EA580C"/>
+      <text x="25" y="47" font-size="11" fill="#C2410C" font-family="Arial, sans-serif">Arrival Delay</text>
+      
+      <rect x="0" y="60" width="180" height="25" rx="6" fill="white" stroke="#EA580C" stroke-width="1"/>
+      <circle cx="12" cy="72.5" r="3" fill="#EA580C"/>
+      <text x="25" y="77" font-size="11" fill="#C2410C" font-family="Arial, sans-serif">Turnaround Time</text>
+    </g>
+    
+    <!-- Metrics -->
+    <rect x="0" y="160" width="220" height="140" rx="12" fill="#FFF7ED" stroke="#EA580C" stroke-width="1.5" stroke-dasharray="8,4" filter="url(#shadow)"/>
+    <text x="110" y="185" text-anchor="middle" font-size="14" font-weight="600" fill="#C2410C" font-family="Arial, sans-serif">Evaluation Metrics</text>
+    <line x1="20" y1="195" x2="200" y2="195" stroke="#FDBA74" stroke-width="1"/>
+    
+    <g transform="translate(20, 210)">
+      <text x="0" y="0" font-size="11" font-weight="500" fill="#C2410C" font-family="Arial, sans-serif">Performance:</text>
+      <text x="10" y="15" font-size="10" fill="#EA580C" font-family="Arial, sans-serif">• RMSE, MAE, R²</text>
+      
+      <text x="0" y="35" font-size="11" font-weight="500" fill="#C2410C" font-family="Arial, sans-serif">Utility:</text>
+      <text x="10" y="50" font-size="10" fill="#EA580C" font-family="Arial, sans-serif">• TSTR Utility Score</text>
+      
+      <text x="0" y="70" font-size="11" font-weight="500" fill="#C2410C" font-family="Arial, sans-serif">Feature Analysis:</text>
+      <text x="10" y="85" font-size="10" fill="#EA580C" font-family="Arial, sans-serif">• Importance Alignment</text>
+    </g>
+  </g>
+
+  <!-- Flow arrows -->
+  <!-- Data prep internal flow -->
+  <path d="M 170 190 L 170 220" stroke="#2563EB" stroke-width="2.5" marker-end="url(#arrowBlue)" fill="none"/>
+  <path d="M 170 390 L 170 420" stroke="#2563EB" stroke-width="2.5" marker-end="url(#arrowBlue)" fill="none"/>
+  
+  <!-- Main flow paths -->
+
+  <!-- Train data → Synthetic (elbowed) -->
+  <g>
+    <path
+      d="M290,460 H330 V270 H370"
+      stroke="#374151"
+      stroke-width="2"
+      marker-end="url(#arrow)"
+      fill="none"/>
+    <rect x="295" y="355" width="70" height="30" rx="15" fill="white" stroke="#374151" stroke-width="1"/>
+    <text x="330" y="374" text-anchor="middle" font-size="10" font-weight="500" fill="#374151" font-family="Arial, sans-serif">
+      Train Data
+    </text>
+  </g>
+
+  <!-- Synthetic + Fidelity to Models -->
+  <g>
+    <path
+      d="M690,270 H760"
+      stroke="#374151"
+      stroke-width="2"
+      marker-end="url(#arrow)"
+      fill="none"/>
+    <rect x="693" y="255" width="45" height="30" rx="15" fill="white" stroke="#374151" stroke-width="1"/>
+    <text x="715" y="272" text-anchor="middle" font-size="9" font-weight="500" fill="#374151" font-family="Arial, sans-serif">
+      Synthetic
+    </text>
+  </g>
+  
+  <!-- TRTR path (baseline) -->
+  <g>
+    <path
+      d="M290,460 H720 V350 H760"
+      stroke="#374151"
+      stroke-width="2"
+      stroke-dasharray="6,3"
+      marker-end="url(#arrow)"
+      fill="none"
+      opacity="0.6"/>
+    <rect x="500" y="445" width="80" height="30" rx="15" fill="white" stroke="#374151" stroke-width="1" opacity="0.8"/>
+    <text x="540" y="462" text-anchor="middle" font-size="10" font-weight="500" fill="#374151" font-family="Arial, sans-serif">
+      TRTR (baseline)
+    </text>
+  </g>
+  
+  <!-- Models to evaluation -->
+  <g>
+    <path
+      d="M1020,270 H1090"
+      stroke="#374151"
+      stroke-width="2"
+      marker-end="url(#arrow)"
+      fill="none"/>
+    <rect x="1025" y="255" width="43" height="30" rx="15" fill="white" stroke="#374151" stroke-width="1"/>
+    <text x="1046" y="272" text-anchor="middle" font-size="10" font-weight="500" fill="#374151" font-family="Arial, sans-serif">
+      Models
+    </text>
+  </g>
+  
+  <!-- Test data to evaluation -->
+  <g>
+    <path
+      d="M290,480 H1050 V350 H1090"
+      stroke="#374151"
+      stroke-width="2"
+      stroke-dasharray="6,3"
+      marker-end="url(#arrow)"
+      fill="none"
+      opacity="0.6"/>
+    <rect x="850" y="465" width="70" height="30" rx="15" fill="white" stroke="#374151" stroke-width="1" opacity="0.8"/>
+    <text x="885" y="483" text-anchor="middle" font-size="10" font-weight="500" fill="#374151" font-family="Arial, sans-serif">
+      Test Data
+    </text>
+  </g>
+  
+</svg>
