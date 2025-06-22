@@ -132,20 +132,21 @@ While substantial progress has been made in both flight delay prediction and syn
 
 Our methodology, illustrated in Figure \ref{fig:framework}, follows a four-phase experimental framework designed to systematically evaluate synthetic data utility for pre-tactical flight prediction. 
 
+
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{diagrams/overall_framework.pdf}
-    \caption{Experimental framework comprising four phases: (1) Data Preparation - processing 1.74M European flight records and extracting pre-tactical features available at schedule publication; (2) Synthetic Generation with Fidelity Assessment - training four generative models and validating statistical properties; (3) Model Training - implementing parallel pipelines for baseline (TRTR) and synthetic data evaluation (TSTR) using five regression algorithms; (4) Evaluation - assessing performance on three operational prediction tasks using multiple metrics.}
+    \caption{Experimental framework comprising four phases: (1) Data Preparation - processing 1.74M European flight records and extracting pre-tactical features available at schedule publication; (2) Synthetic Generation - training four generative models and validating statistical properties; (3) Predictive Models - implementing parallel pipelines for baseline (TRTR) and synthetic data evaluation (TSTR) using five regression algorithms; (4) Evaluation - assessing performance on three operational prediction tasks using multiple metrics.}
     \label{fig:framework}
 \end{figure*}
 
 In Phase 1 (Data Preparation), we process 1.74 million flight records from the OAG dataset, extracting only features available at schedule publication time—categorical variables (carrier, airports, aircraft type), temporal features (month, day, hour, day of week), and operational metrics (scheduled duration). The dataset is split 80/20 for training and testing, with turnaround times constrained to six hours to exclude overnight parking.
 
-Phase 2 (Synthetic Generation and Fidelity) involves training four generative models on the real training data: Gaussian Copula (statistical modeling), CTGAN (adversarial learning), TabSyn (VAE with diffusion), and REaLTabFormer (transformer architecture). Before proceeding to model training, we conduct comprehensive fidelity assessment using statistical similarity metrics, correlation preservation tests, joint distribution analysis, and detection difficulty measures to ensure synthetic data quality.
+Phase 2 (Synthetic Data Generation) involves training four generative models on the real training data: Gaussian Copula (statistical modeling), CTGAN (adversarial learning), TabSyn (VAE with diffusion), and REaLTabFormer (transformer architecture). Before proceeding to model training, we conduct comprehensive fidelity assessment using statistical similarity metrics, correlation preservation tests, joint distribution analysis, and detection difficulty measures to ensure synthetic data quality.
 
-Phase 3 (Model Training) establishes two parallel pipelines. The baseline pipeline (Train on Real, Test on Real - TRTR) trains five regression models—Decision Tree, Random Forest, Gradient Boosting, XGBoost, and CatBoost—on real training data. The evaluation pipeline (Train on Synthetic, Test on Real - TSTR) trains the same models on each synthetic dataset, enabling direct comparison of predictive performance.
+Phase 3 (Predictive Model Training) establishes two parallel pipelines. The baseline pipeline (Train on Real, Test on Real - TRTR) trains five regression models—Decision Tree, Random Forest, Gradient Boosting, XGBoost, and CatBoost—on real training data. The evaluation pipeline (Train on Synthetic, Test on Real - TSTR) trains the same models on each synthetic dataset, enabling direct comparison of predictive performance.
 
-Phase 4 (Evaluation) assesses all trained models on the held-out real test set across three pre-tactical prediction tasks: departure delay, arrival delay, and turnaround time. We employ performance metrics (RMSE, MAE, R²), utility scores quantifying synthetic-to-real performance ratios, and feature importance alignment to ensure models identify the same operational drivers regardless of training data source.
+Phase 4 (Peformance Evaluation) assesses all trained models on the held-out real test set across three pre-tactical prediction tasks: departure delay, arrival delay, and turnaround time. We employ performance metrics (RMSE, MAE, R²), utility scores quantifying synthetic-to-real performance ratios, and feature importance alignment to ensure models identify the same operational drivers regardless of training data source.
 
 
 \subsection{Dataset}
