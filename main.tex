@@ -16,6 +16,9 @@
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{tabularx}  
+
 % \usepackage{xcolor}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -130,6 +133,7 @@ While substantial progress has been made in both flight delay prediction and syn
 
 \section{Methodology}
 
+\subsection{Overview} 
 Our methodology, illustrated in Figure \ref{fig:framework}, follows a four-phase experimental framework designed to systematically evaluate synthetic data utility for pre-tactical flight prediction. 
 
 
@@ -148,101 +152,106 @@ Phase 3 (Predictive Model Training) establishes two parallel pipelines. The base
 
 Phase 4 (Peformance Evaluation) assesses all trained models on the held-out real test set across three pre-tactical prediction tasks: departure delay, arrival delay, and turnaround time. We employ performance metrics (RMSE, MAE, R²), utility scores quantifying synthetic-to-real performance ratios, and feature importance alignment to ensure models identify the same operational drivers regardless of training data source.
 
+\subsection{Phase 1: Data Preparation}
 
-\subsection{Dataset}
+\subsubsection{Flight Dataset}
 
 We utilized OAG's Flight Info Direct Status Summary database\footnote{'Status Direct: Data Fields Explained'. Accessed: June 17, 2025. [Online]. Available: \url{https://knowledge.oag.com/docs/status-direct-data-fields-explained}}, extracting European flight operations from March, June, September, and December 2019. After filtering for completed flights with full operational timelines and valid turnaround observations, we obtained 1,744,667 flight records.
-
-\subsubsection{Feature Selection}
-For pre-tactical prediction, we selected only features available at schedule publication time:
-
-\textbf{Categorical}: IATA carrier code, departure/arrival airports, aircraft type
-
-\textbf{Temporal}: Month, day, hour, minute (extracted from scheduled departure), day of week
-
-\textbf{Operational}: Scheduled flight duration (actual duration excluded in pre-tactical mode)
-
-\subsubsection{Target Variables}
-We computed three operational metrics:
-\begin{itemize}
-    \item \textbf{Departure delay}: $\Delta_{\text{dep}} = t_{\text{AOBT}} - t_{\text{SOBT}}$ (Actual vs. Scheduled Off-Block Time)
-    \item \textbf{Arrival delay}: $\Delta_{\text{arr}} = t_{\text{AIBT}} - t_{\text{SIBT}}$ (Actual vs. Scheduled In-Block Time)
-    \item \textbf{Turnaround time}: Ground time between consecutive flights of the same aircraft at the same airport, constrained to $\leq$ 6 hours to exclude overnight parking
-\end{itemize}
 
 The turnaround matching process ensured all records have valid turnaround observations, enabling consistent evaluation across all three prediction tasks. The dataset exhibits mean departure delay of 11.1 minutes ($\sigma$=24.0), mean arrival delay of 7.5 minutes ($\sigma$=25.8), and mean turnaround time of 70.8 minutes ($\sigma$=51.2).
 
 We applied an 80/20 train-test split (1,395,733/348,934 flights) with fixed random seed for reproducibility.
 
+\subsubsection{Feature Selection}
+For pre-tactical prediction, we selected only features available at schedule publication time:
 
-\subsection{Synthetic Data Generation}
-Four state-of-the-art synthetic data generators were evaluated, each representing different technical approaches to capturing the complex relationships in flight data:
-
-\subsubsection{Gaussian Copula (GC)}
-A statistical approach that models multivariate dependencies by separating marginal distributions from their dependence structure. This method is particularly suited for mixed-type tabular data, handling both categorical (airports, carriers, aircraft types) and continuous (delays, turnaround times) variables through a unified framework.
-
-The Gaussian copula model operates in two stages:
-
-\textbf{Marginal Distribution Fitting:} For each variable $X_i$ in the dataset, we fit an appropriate univariate distribution. For continuous variables, the implementation employs a flexible selection mechanism that evaluates multiple candidate distributions (e.g., Gaussian, exponential, beta) using the Kolmogorov-Smirnov test, automatically selecting the best-fitting model. Categorical variables are encoded using ordinal encoding, preserving their discrete nature while enabling numerical processing.
-
-\textbf{Dependency Modeling:} After fitting marginals, we transform each variable to the standard normal domain using:
-\begin{equation}
-Z_i = \Phi^{-1}(F_i(X_i))
-\end{equation}
-where $F_i$ is the fitted CDF for variable $i$ and $\Phi^{-1}$ is the inverse standard normal CDF. The transformation clips extreme values to $[\epsilon, 1-\epsilon]$ to ensure numerical stability.
-
-The correlation structure is then captured by computing the correlation matrix $\mathbf{R}$ of the transformed variables $\{Z_1, ..., Z_d\}$. For random variables $X_1, X_2, \ldots, X_d$ with marginal CDFs $F_1, F_2, \ldots, F_d$, let $u_i = F_i(X_i)$ represent the probability integral transforms. The joint distribution is then modeled using the Gaussian copula:
-\begin{equation}
-C_{\mathbf{R}}(u_1, ..., u_d) = \Phi_{\mathbf{R}}(\Phi^{-1}(u_1), ..., \Phi^{-1}(u_d))
-\end{equation}
-where $\Phi_{\mathbf{R}}$ represents the CDF of a multivariate normal distribution with correlation matrix $\mathbf{R}$.
-
-
-\textbf{Synthetic Data Generation:} To generate new samples:
-\begin{enumerate}
-    \item Sample $\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})$ from the multivariate normal
-    \item Transform to uniform: $u_i = \Phi(z_i)$ for each component
-    \item Apply inverse marginal CDFs: $x_i = F_i^{-1}(u_i)$
-    \item For categorical variables, round to nearest valid category index and decode
-\end{enumerate}
-
-This approach preserves parametrically-fitted marginal distributions while capturing linear correlations between variables. However, it may struggle with complex non-linear dependencies and rare event combinations that are particularly important in aviation operations.
-
-
-\subsubsection{Conditional Tabular GAN (CTGAN)} \cite{xu2019modeling}
-A generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
 \begin{itemize}
-    \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
-    \item \textbf{Conditional generation}: Employs training-by-sampling with log-frequency to address category imbalance
-    \item \textbf{PacGAN framework}: Prevents mode collapse by having the discriminator evaluate multiple samples jointly
-    \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
+    \item Categorical: IATA carrier code, departure/arrival airports, aircraft type
+    \item Temporal: Month, day, hour, minute (extracted from scheduled departure), day of week
+    \item Operational: Scheduled flight duration (actual duration excluded in pre-tactical mode)
 \end{itemize}
 
-\subsubsection{TabSyn} \cite{zhang2024mixed}
-A two-stage approach combining Variational Autoencoders (VAE) with diffusion models:
-\begin{enumerate}
-    \item \textbf{Stage 1 - VAE Training}: Learns continuous latent representations of mixed-type data using:
-    \begin{equation}
-    \mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \cdot \mathcal{L}_{\text{KL}}
-    \end{equation}
-    where $\beta$ is adaptively scheduled during training
-    \item \textbf{Stage 2 - Diffusion in Latent Space}: Applies score-based diffusion to generate new latent vectors, requiring only 20-50 reverse steps compared to thousands in traditional diffusion
-\end{enumerate}
-
-\subsubsection{REaLTabFormer} \cite{solatorio2023realtabformer}
-A transformer-based model that treats each table row as a sequence of tokens. The architecture leverages:
+\subsubsection{Target Variables}
+We computed three operational metrics:
 \begin{itemize}
-    \item \textbf{GPT-2 backbone}: 6 decoder layers with 768-dimensional embeddings
-    \item \textbf{Column-aware tokenization}: Separate vocabularies for each column type
-    \item \textbf{Regularization mechanisms}: Random masking (10\%) and bootstrap-based $Q_\delta$ testing to prevent memorization
-    \item \textbf{Constrained sampling}: Domain-specific token filtering during generation
+    \item Departure delay: $\Delta_{\text{dep}} = t_{\text{AOBT}} - t_{\text{SOBT}}$ (Actual vs. Scheduled Off-Block Time)
+    \item Arrival delay: $\Delta_{\text{arr}} = t_{\text{AIBT}} - t_{\text{SIBT}}$ (Actual vs. Scheduled In-Block Time)
+    \item Turnaround time: Ground time between consecutive flights of the same aircraft at the same airport, constrained to $\leq$ 6 hours to exclude overnight parking
 \end{itemize}
 
-\subsection{Fidelity Evaluation Metrics}
+
+\subsection{Phase 2: Synthetic Data Generation}
+
+
+% \subsubsection{Generative Models}
+
+% Four state-of-the-art synthetic data generators were evaluated, each representing different technical approaches to capturing the complex relationships in flight data:
+
+
+\subsubsection{Generative Models}
+
+Four state-of-the-art synthetic data generators were evaluated, each representing different technical approaches to capturing the complex relationships in flight data. Table~\ref{tab:generator_comparison} summarizes their key characteristics.
+
+% \begin{table*}[htbp]
+% \centering
+% \caption{Comparison of Synthetic Data Generation Models}
+% \label{tab:generator_comparison}
+% \small
+% \begin{tabular}{p{2.5cm}p{2cm}p{3cm}p{4cm}p{3.5cm}}
+% \toprule
+% \textbf{Model} & \textbf{Approach} & \textbf{Key Innovation} & \textbf{Strengths} & \textbf{Limitations} \\
+% \midrule
+% \textbf{Gaussian Copula} & Statistical & Separates marginals from dependence structure & Fast training, preserves marginal distributions, minimal parameters & Limited to linear correlations, struggles with rare events \\
+% \midrule
+% \textbf{CTGAN} & Adversarial (GAN) & Mode-specific normalization for mixed data & Handles multimodal distributions, conditional generation & Training instability, computational cost \\
+% \midrule
+% \textbf{TabSyn} & VAE + Diffusion & Two-stage latent space generation & Efficient sampling (20-50 steps), captures complex dependencies & Two-stage complexity, no conditional generation \\
+% \midrule
+% \textbf{REaLTabFormer} & Transformer & Row-wise autoregressive generation & Superior relationship preservation, domain constraints & High computational requirements, needs large datasets \\
+% \bottomrule
+% \end{tabular}
+% \end{table*}
+
+
+
+
+\begin{table*}[htbp]
+\centering
+\caption{Comparison of Synthetic Data Generation Models}
+\label{tab:generator_comparison}
+\small
+\begin{tabularx}{\textwidth}{l l X X X}
+\toprule
+\textbf{Model} & \textbf{Approach} & \textbf{Key Innovation} & \textbf{Strengths} & \textbf{Limitations} \\
+\midrule
+\textbf{Gaussian Copula} & Statistical & Separates marginals from dependence structure & Fast training, preserves marginal distributions, minimal parameters & Limited to linear correlations, struggles with rare events \\
+\midrule
+\textbf{CTGAN} & Adversarial (GAN) & Mode-specific normalization for mixed data & Handles multimodal distributions, conditional generation & Training instability, computational cost \\
+\midrule
+\textbf{TabSyn} & VAE + Diffusion & Two-stage latent space generation & Efficient sampling (20-50 steps), captures complex dependencies & Two-stage complexity, no conditional generation \\
+\midrule
+\textbf{REaLTabFormer} & Transformer & Row-wise autoregressive generation & Superior relationship preservation, domain constraints & High computational requirements, needs large datasets \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+
+\textbf{Gaussian Copula (GC)} represents the simplest approach, using classical statistical theory to model dependencies between flight variables. For aviation data, it fits appropriate marginal distributions to each feature (e.g., log-normal for delays, categorical for airports) while capturing their correlation structure through a multivariate Gaussian copula. While computationally efficient and requiring minimal training data, its reliance on linear correlations limits its ability to capture the complex non-linear relationships common in flight operations, such as cascading delays or airport-specific congestion patterns.
+
+\textbf{Conditional Tabular GAN (CTGAN)} \cite{xu2019modeling} addresses aviation data's mixed types through specialized preprocessing. Its mode-specific normalization handles the multimodal nature of continuous features like delays (which cluster around zero but have long tails), while training-by-sampling ensures adequate representation of rare categories such as infrequent aircraft types or remote airports. The conditional generation capability proves valuable for creating targeted scenarios, though the adversarial training can be unstable and computationally intensive for large flight datasets.
+
+\textbf{TabSyn} \cite{zhang2024mixed} employs a sophisticated two-stage approach particularly suited to aviation's heterogeneous data. First, a variational autoencoder learns continuous representations that capture relationships between categorical features (carriers, airports) and continuous metrics (delays, durations). Then, a diffusion model in this latent space enables efficient generation requiring only 20-50 denoising steps—orders of magnitude faster than traditional diffusion. This efficiency makes it practical for generating large synthetic flight datasets, though the two-stage architecture adds implementation complexity.
+
+\textbf{REaLTabFormer} \cite{solatorio2023realtabformer} leverages transformer architectures to model each flight record as a sequence of tokens. This approach naturally captures the sequential dependencies in flight data—how airline choice influences aircraft type, which affects turnaround time, which impacts subsequent delays. The model's column-aware tokenization and domain-specific constraints ensure generated values remain operationally valid (e.g., preventing impossible airport-aircraft combinations). While achieving the highest fidelity among evaluated methods, it requires substantial computational resources and training data.
+
+For detailed architectural specifications, training procedures, and implementation details of each model, see Appendix~\ref{sec:appendix}.
+
+
+\subsubsection{Fidelity Evaluation}
 
 To ensure synthetic data maintains the statistical properties necessary for reliable downstream analysis, we employ a comprehensive fidelity evaluation framework spanning five complementary dimensions. Each dimension captures different aspects of how well synthetic data reproduces the characteristics of real flight operations.
 
-\subsubsection{Statistical Similarity}
+Statistical Similarity:
 We assess univariate distributional fidelity using metrics tailored to data type. For continuous variables (e.g., delays, durations), we employ the Kolmogorov-Smirnov (KS) complement:
 \begin{equation}
 \text{KS}_{\text{complement}} = 1 - D_{KS}
@@ -251,7 +260,7 @@ where $D_{KS}$ represents the maximum distance between empirical cumulative dist
 
 For categorical variables (e.g., carriers, airports), we apply Pearson's Chi-Squared test, converting p-values to a normalized 0-1 scale where higher values signify better frequency matching between real and synthetic categorical distributions.
 
-\subsubsection{Correlation Preservation}
+Correlation Preservation:
 Maintaining inter-feature relationships is crucial for operational validity. We evaluate four correlation metrics:
 \begin{itemize}
     \item \textbf{Pearson correlation}: Captures linear relationships between continuous variables
@@ -260,14 +269,14 @@ Maintaining inter-feature relationships is crucial for operational validity. We 
     \item \textbf{Mixed-Type correlation}: Extends analysis across heterogeneous variable pairs using appropriate measures (Pearson's r for numerical-numerical, Cramér's V for categorical-categorical, correlation ratio for mixed pairs)
 \end{itemize}
 
-\subsubsection{Joint Distribution Fidelity}
+Joint Distribution Fidelity:
 Beyond pairwise relationships, we evaluate multivariate distributional alignment through Kullback-Leibler (KL) divergence. For continuous variables, we transform KL divergence to a fidelity score:
 \begin{equation}
 \text{Fidelity}_{\text{continuous}} = \exp(-\text{KL}(p||q))
 \end{equation}
 where $p$ and $q$ represent real and synthetic distributions. We apply analogous measures for discrete variables, assessing how well generators capture complex categorical combinations (e.g., airline-airport pairs).
 
-\subsubsection{Likelihood-Based Assessment}
+Likelihood-Based Assessment:
 We fit probabilistic models to real data and measure the likelihood of synthetic samples under these learned distributions:
 \begin{itemize}
     \item \textbf{Bayesian Network likelihood}: Evaluates categorical dependencies using directed graphical models learned via the Chow-Liu algorithm
@@ -275,7 +284,7 @@ We fit probabilistic models to real data and measure the likelihood of synthetic
 \end{itemize}
 Higher log-likelihood values indicate synthetic data that better conforms to the statistical patterns in real operations.
 
-\subsubsection{Detection Difficulty}
+Detection Difficulty:
 As a holistic measure of synthetic data quality, we train regularized logistic regression classifiers to distinguish real from synthetic records. The detection score is normalized as:
 \begin{equation}
 \text{Detection Score} = 1 - (\text{AUC} - 0.5) \times 2
@@ -284,11 +293,36 @@ where AUC represents the area under the ROC curve. Scores approaching 1.0 indica
 
 This multi-faceted evaluation ensures synthetic data not only mimics surface-level statistics but preserves the complex interdependencies essential for aviation operational analysis.
 
-\subsection{Pre-tactical Prediction Tasks}
+
+\subsection{Phase 3: Predictive Model Training}
+
+\subsubsection{Regression Algorithms}
+We employed five regression algorithms to ensure robust evaluation across different modeling paradigms:
+\begin{itemize}
+    \item \textbf{Decision Tree}: Captures non-linear patterns through recursive partitioning
+    \item \textbf{Random Forest}: Ensemble of trees for improved generalization
+    \item \textbf{Gradient Boosting}: Sequential ensemble focusing on residual errors
+    \item \textbf{XGBoost}: Optimized gradient boosting with regularization
+    \item \textbf{CatBoost}: Gradient boosting specialized for categorical features
+\end{itemize}
+
+\subsubsection{Training Protocols}
+\begin{enumerate}
+    \item \textbf{Train on Real, Test on Real (TRTR)}: Baseline performance using historical data
+    \item \textbf{Train on Synthetic, Test on Real (TSTR)}: Utility evaluation of synthetic data
+    \item \textbf{Feature Engineering}: All models used identical pre-tactical features to ensure fair comparison
+    \item \textbf{Hyperparameter Optimization}: Default parameters were used to avoid biasing results toward specific generators
+\end{enumerate}
+
+
+
+\subsection{Phase 4: Performance Evaluation}
+
+\subsubsection{Prediction Tasks}
 
 We evaluated three operational prediction scenarios, all in pre-tactical mode where only scheduled information is available:
 
-\subsubsection{Turnaround Time Prediction}
+Turnaround Time Prediction: 
 Forecasting the duration between aircraft arrival (In-Block) and departure (Off-Block) using:
 \begin{itemize}
     \item Input features: Scheduled times, airports, carrier, aircraft type, temporal features
@@ -296,7 +330,7 @@ Forecasting the duration between aircraft arrival (In-Block) and departure (Off-
     \item Operational relevance: Critical for gate allocation and ground resource planning
 \end{itemize}
 
-\subsubsection{Departure Delay Prediction}
+Departure Delay Prediction:
 Estimating the difference between scheduled and actual departure times:
 \begin{itemize}
     \item Input features: Same as turnaround prediction
@@ -304,7 +338,7 @@ Estimating the difference between scheduled and actual departure times:
     \item Operational relevance: Enables proactive delay mitigation strategies
 \end{itemize}
 
-\subsubsection{Arrival Delay Prediction}
+Arrival Delay Prediction:
 Forecasting arrival delays using only pre-departure information:
 \begin{itemize}
     \item Input features: Same as above predictions
@@ -312,11 +346,11 @@ Forecasting arrival delays using only pre-departure information:
     \item Challenge: Most difficult task due to cumulative uncertainties from departure delays and en-route factors
 \end{itemize}
 
-\subsection{Evaluation Framework}
+\subsubsection{Evaluation Metrics}
 
 Our evaluation employed multiple complementary metrics to assess synthetic data quality comprehensively:
 
-\subsubsection{Predictive Performance Metrics}
+Predictive Performance Metrics:
 \begin{itemize}
     \item \textbf{Root Mean Squared Error (RMSE)}: Emphasizes large prediction errors critical for disruption management:
     \begin{equation}
@@ -334,44 +368,22 @@ Our evaluation employed multiple complementary metrics to assess synthetic data 
     \end{equation}
 \end{itemize}
 
-\subsubsection{Utility Score}
-A normalized metric combining RMSE and R² performance to quantify how well synthetic-trained models substitute for real-trained models:
-
+Utility Score: A normalized metric combining RMSE and R² performance to quantify how well synthetic-trained models substitute for real-trained models:
 \begin{equation}
 \text{Utility} = 0.5 \times \min\left(\frac{\text{RMSE}_{\text{real}}}{\text{RMSE}_{\text{synthetic}}}, 1.0\right) + 0.5 \times \min\left(\frac{R^2_{\text{synthetic}}}{R^2_{\text{real}}}, 1.0\right)
 \end{equation}
 
-\subsubsection{Feature Importance Alignment}
+Feature Importance Alignment:
 To ensure synthetic data preserves operational relationships, we compute the cosine similarity between feature importance vectors from models trained on real ($\mathbf{v}_{\text{real}}$) versus synthetic ($\mathbf{v}_{\text{synthetic}}$) data:
-
 \begin{equation}
 \text{Alignment} = \frac{\mathbf{v}_{\text{real}} \cdot \mathbf{v}_{\text{synthetic}}}{||\mathbf{v}_{\text{real}}|| \cdot ||\mathbf{v}_{\text{synthetic}}||}
 \end{equation}
 
-\subsection{Machine Learning Pipeline}
-
-\subsubsection{Model Selection}
-We employed five regression algorithms to ensure robust evaluation across different modeling paradigms:
-\begin{itemize}
-    \item \textbf{Decision Tree}: Captures non-linear patterns through recursive partitioning
-    \item \textbf{Random Forest}: Ensemble of trees for improved generalization
-    \item \textbf{Gradient Boosting}: Sequential ensemble focusing on residual errors
-    \item \textbf{XGBoost}: Optimized gradient boosting with regularization
-    \item \textbf{CatBoost}: Gradient boosting specialized for categorical features
-\end{itemize}
-
-\subsubsection{Training Protocol}
-\begin{enumerate}
-    \item \textbf{Train on Real, Test on Real (TRTR)}: Baseline performance using historical data
-    \item \textbf{Train on Synthetic, Test on Real (TSTR)}: Utility evaluation of synthetic data
-    \item \textbf{Feature Engineering}: All models used identical pre-tactical features to ensure fair comparison
-    \item \textbf{Hyperparameter Optimization}: Default parameters were used to avoid biasing results toward specific generators
-\end{enumerate}
 
 
 \section{Results and Discussion}
 
-\subsection{Synthetic Data Fidelity Assessment}
+\subsection{Validating Synthetic Data Fidelity}
 \label{sec:fidelity_results}
 
 Before evaluating predictive utility, we assessed the statistical fidelity of each synthetic data generator to ensure the generated data maintains essential properties of real flight operations. Table~\ref{tab:fidelity_metrics} presents twelve complementary metrics measuring different aspects of synthetic data quality.
@@ -638,6 +650,74 @@ This paper is based on research conducted within the SynthAIr project, which has
 \bibliography{references}
 
 
+
+% add appendix 
+
+\appendix
+\label{sec:appendix}
+
+\section{Generative Models Overview}
+\label{sec:generative_models}
+
+Gaussian Copula (GC)
+A statistical approach that models multivariate dependencies by separating marginal distributions from their dependence structure. This method is particularly suited for mixed-type tabular data, handling both categorical (airports, carriers, aircraft types) and continuous (delays, turnaround times) variables through a unified framework.
+
+The Gaussian copula model operates in two stages:
+
+\textbf{Marginal Distribution Fitting:} For each variable $X_i$ in the dataset, we fit an appropriate univariate distribution. For continuous variables, the implementation employs a flexible selection mechanism that evaluates multiple candidate distributions (e.g., Gaussian, exponential, beta) using the Kolmogorov-Smirnov test, automatically selecting the best-fitting model. Categorical variables are encoded using ordinal encoding, preserving their discrete nature while enabling numerical processing.
+
+\textbf{Dependency Modeling:} After fitting marginals, we transform each variable to the standard normal domain using:
+\begin{equation}
+Z_i = \Phi^{-1}(F_i(X_i))
+\end{equation}
+where $F_i$ is the fitted CDF for variable $i$ and $\Phi^{-1}$ is the inverse standard normal CDF. The transformation clips extreme values to $[\epsilon, 1-\epsilon]$ to ensure numerical stability.
+
+The correlation structure is then captured by computing the correlation matrix $\mathbf{R}$ of the transformed variables $\{Z_1, ..., Z_d\}$. For random variables $X_1, X_2, \ldots, X_d$ with marginal CDFs $F_1, F_2, \ldots, F_d$, let $u_i = F_i(X_i)$ represent the probability integral transforms. The joint distribution is then modeled using the Gaussian copula:
+\begin{equation}
+C_{\mathbf{R}}(u_1, ..., u_d) = \Phi_{\mathbf{R}}(\Phi^{-1}(u_1), ..., \Phi^{-1}(u_d))
+\end{equation}
+where $\Phi_{\mathbf{R}}$ represents the CDF of a multivariate normal distribution with correlation matrix $\mathbf{R}$.
+
+
+\textbf{Synthetic Data Generation:} To generate new samples:
+\begin{enumerate}
+    \item Sample $\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})$ from the multivariate normal
+    \item Transform to uniform: $u_i = \Phi(z_i)$ for each component
+    \item Apply inverse marginal CDFs: $x_i = F_i^{-1}(u_i)$
+    \item For categorical variables, round to nearest valid category index and decode
+\end{enumerate}
+
+This approach preserves parametrically-fitted marginal distributions while capturing linear correlations between variables. However, it may struggle with complex non-linear dependencies and rare event combinations that are particularly important in aviation operations.
+
+
+Conditional Tabular GAN (CTGAN) \cite{xu2019modeling}
+A generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
+\begin{itemize}
+    \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
+    \item \textbf{Conditional generation}: Employs training-by-sampling with log-frequency to address category imbalance
+    \item \textbf{PacGAN framework}: Prevents mode collapse by having the discriminator evaluate multiple samples jointly
+    \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
+\end{itemize}
+
+TabSyn \cite{zhang2024mixed}
+A two-stage approach combining Variational Autoencoders (VAE) with diffusion models:
+\begin{enumerate}
+    \item \textbf{Stage 1 - VAE Training}: Learns continuous latent representations of mixed-type data using:
+    \begin{equation}
+    \mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \cdot \mathcal{L}_{\text{KL}}
+    \end{equation}
+    where $\beta$ is adaptively scheduled during training
+    \item \textbf{Stage 2 - Diffusion in Latent Space}: Applies score-based diffusion to generate new latent vectors, requiring only 20-50 reverse steps compared to thousands in traditional diffusion
+\end{enumerate}
+
+REaLTabFormer \cite{solatorio2023realtabformer}
+A transformer-based model that treats each table row as a sequence of tokens. The architecture leverages:
+\begin{itemize}
+    \item \textbf{GPT-2 backbone}: 6 decoder layers with 768-dimensional embeddings
+    \item \textbf{Column-aware tokenization}: Separate vocabularies for each column type
+    \item \textbf{Regularization mechanisms}: Random masking (10\%) and bootstrap-based $Q_\delta$ testing to prevent memorization
+    \item \textbf{Constrained sampling}: Domain-specific token filtering during generation
+\end{itemize}
 
 
 \end{document}
