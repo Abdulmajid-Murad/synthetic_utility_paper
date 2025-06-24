@@ -16,7 +16,6 @@
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
-\usepackage{booktabs}
 \usepackage{tabularx}  
 
 % \usepackage{xcolor}
@@ -137,7 +136,7 @@ While substantial progress has been made in both flight delay prediction and syn
 Our methodology, illustrated in Figure \ref{fig:framework}, follows a four-phase experimental framework designed to systematically evaluate synthetic data utility for pre-tactical flight prediction. 
 
 
-\begin{figure*}[htbp]
+\begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{diagrams/overall_framework.pdf}
     \caption{Experimental framework comprising four phases: (1) Data Preparation - processing 1.74M European flight records and extracting pre-tactical features available at schedule publication; (2) Synthetic Data Generation - training four generative models and validating statistical properties; (3) Predictive Model Training - implementing parallel pipelines for baseline (TRTR) and synthetic data evaluation (TSTR) using five regression algorithms; (4) Performance Evaluation - assessing performance on three operational prediction tasks using multiple metrics.}
@@ -244,45 +243,45 @@ Four state-of-the-art synthetic data generators were evaluated, each representin
 
 \textbf{REaLTabFormer} \cite{solatorio2023realtabformer} leverages transformer architectures to model each flight record as a sequence of tokens. This approach captures the sequential dependencies in flight data—how airline choice influences aircraft type, which affects turnaround time, which impacts subsequent delays. The model's column-aware tokenization and domain-specific constraints ensure generated values remain operationally valid. While achieving the highest fidelity among evaluated methods, it requires substantial computational resources and training data.
 
-For detailed architectural specifications, training procedures, and implementation details of each model, see Appendix~\ref{sec:appendix}.
+For detailed architectural specifications, training procedures, and implementation details of each model, see Appendix~\ref{sec:appendix-generative_models}.
 
 
 \subsubsection{Fidelity Evaluation}
 
 To ensure synthetic data maintains the statistical properties necessary for reliable downstream analysis, we employ a comprehensive fidelity evaluation framework spanning five complementary dimensions. Each dimension captures different aspects of how well synthetic data reproduces the characteristics of real flight operations.
 
-Statistical Similarity:
+\textbf{Statistical Similarity}:
 We assess univariate distributional fidelity using metrics tailored to data type. For continuous variables (e.g., delays, durations), we employ the Kolmogorov-Smirnov (KS) complement:
 \begin{equation}
 \text{KS}_{\text{complement}} = 1 - D_{KS}
 \end{equation}
 where $D_{KS}$ represents the maximum distance between empirical cumulative distribution functions. Values approaching 1.0 indicate near-perfect alignment of continuous distributions. For categorical variables (e.g., carriers, airports), we apply Pearson's Chi-Squared test, converting p-values to a normalized 0-1 scale where higher values signify better frequency matching between real and synthetic categorical distributions.
 
-Correlation Preservation:
+\textbf{Correlation Preservation}:
 Maintaining inter-feature relationships is crucial for operational validity. We evaluate four correlation metrics:
 \begin{itemize}
-    \item \textbf{Pearson correlation}: Captures linear relationships between continuous variables
-    \item \textbf{Spearman and Kendall correlations}: Assess rank-based and ordinal dependencies, respectively
-    \item \textbf{Correlation Matrix Distance}: Measures preservation of global correlation structure using Frobenius norm
-    \item \textbf{Mixed-Type correlation}: Extends analysis across heterogeneous variable pairs using appropriate measures (Pearson's r for numerical-numerical, Cramér's V for categorical-categorical, correlation ratio for mixed pairs)
+    \item Pearson correlation: Captures linear relationships between continuous variables
+    \item Spearman and Kendall correlations: Assess rank-based and ordinal dependencies, respectively
+    \item Correlation Matrix Distance: Measures preservation of global correlation structure using Frobenius norm
+    \item Mixed-Type correlation: Extends analysis across heterogeneous variable pairs using appropriate measures (Pearson's r for numerical-numerical, Cramér's V for categorical-categorical, correlation ratio for mixed pairs)
 \end{itemize}
 
-Joint Distribution Fidelity:
+\textbf{Joint Distribution Fidelity}:
 Beyond pairwise relationships, we evaluate multivariate distributional alignment through Kullback-Leibler (KL) divergence. For continuous variables, we transform KL divergence to a fidelity score:
 \begin{equation}
 \text{Fidelity}_{\text{continuous}} = \exp(-\text{KL}(p||q))
 \end{equation}
 where $p$ and $q$ represent real and synthetic distributions. We apply analogous measures for discrete variables, assessing how well generators capture complex categorical combinations (e.g., airline-airport pairs).
 
-Likelihood-Based Assessment:
+\textbf{Likelihood-Based Assessment}:
 We fit probabilistic models to real data and measure the likelihood of synthetic samples under these learned distributions:
 \begin{itemize}
-    \item \textbf{Bayesian Network likelihood}: Evaluates categorical dependencies using directed graphical models learned via the Chow-Liu algorithm
-    \item \textbf{Gaussian Mixture Model likelihood}: Assesses continuous feature distributions as weighted combinations of multivariate Gaussians
+    \item Bayesian Network likelihood: Evaluates categorical dependencies using directed graphical models learned via the Chow-Liu algorithm
+    \item Gaussian Mixture Model likelihood: Assesses continuous feature distributions as weighted combinations of multivariate Gaussians
 \end{itemize}
 Higher log-likelihood values indicate synthetic data that better conforms to the statistical patterns in real operations.
 
-Detection Difficulty:
+\textbf{Detection Difficulty}:
 As a holistic measure of synthetic data quality, we train regularized logistic regression classifiers to distinguish real from synthetic records. The detection score is normalized as:
 \begin{equation}
 \text{Detection Score} = 1 - (\text{AUC} - 0.5) \times 2
@@ -320,7 +319,7 @@ We employed five regression algorithms to ensure robust evaluation across differ
 
 We evaluated three operational prediction scenarios, all in pre-tactical mode where only scheduled information is available:
 
-Turnaround Time Prediction: 
+\textbf{Turnaround Time Prediction}: 
 Forecasting the duration between aircraft arrival (In-Block) and departure (Off-Block) using:
 \begin{itemize}
     \item Input features: Scheduled times, airports, carrier, aircraft type, temporal features
@@ -328,7 +327,7 @@ Forecasting the duration between aircraft arrival (In-Block) and departure (Off-
     \item Operational relevance: Critical for gate allocation and ground resource planning
 \end{itemize}
 
-Departure Delay Prediction:
+\textbf{Departure Delay Prediction}:
 Estimating the difference between scheduled and actual departure times:
 \begin{itemize}
     \item Input features: Same as turnaround prediction
@@ -336,7 +335,7 @@ Estimating the difference between scheduled and actual departure times:
     \item Operational relevance: Enables proactive delay mitigation strategies
 \end{itemize}
 
-Arrival Delay Prediction:
+\textbf{Arrival Delay Prediction}:
 Forecasting arrival delays using only pre-departure information:
 \begin{itemize}
     \item Input features: Same as above predictions
@@ -348,30 +347,57 @@ Forecasting arrival delays using only pre-departure information:
 
 Our evaluation employed multiple complementary metrics to assess synthetic data quality comprehensively:
 
-Predictive Performance Metrics:
+\textbf{Predictive Performance Metrics}:
 \begin{itemize}
-    \item \textbf{Root Mean Squared Error (RMSE)}: Emphasizes large prediction errors critical for disruption management:
+    \item Root Mean Squared Error (RMSE): Emphasizes large prediction errors critical for disruption management:
     \begin{equation}
-    \text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}
+        \text{RMSE} = \bigl( \tfrac{1}{n}\sum_{i=1}^{n}(y_i-\hat y_i)^2 \bigr)^{1/2}
+    % \text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}
     \end{equation}
     
-    \item \textbf{Mean Absolute Error (MAE)}: Provides typical error magnitude for operational planning:
+    \item Mean Absolute Error (MAE): Provides typical error magnitude for operational planning:
     \begin{equation}
     \text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|y_i - \hat{y}_i|
     \end{equation}
     
-    \item \textbf{Coefficient of Determination (R²)}: Measures explained variance to assess predictability limits:
+    \item Coefficient of Determination (R²): Measures explained variance to assess predictability limits:
     \begin{equation}
     R^2 = 1 - \frac{\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}{\sum_{i=1}^{n}(y_i - \bar{y})^2}
     \end{equation}
 \end{itemize}
 
-Utility Score: A normalized metric combining RMSE and R² performance to quantify how well synthetic-trained models substitute for real-trained models:
-\begin{equation}
-\text{Utility} = 0.5 \times \min\left(\frac{\text{RMSE}_{\text{real}}}{\text{RMSE}_{\text{synthetic}}}, 1.0\right) + 0.5 \times \min\left(\frac{R^2_{\text{synthetic}}}{R^2_{\text{real}}}, 1.0\right)
-\end{equation}
+\textbf{Utility Score}: A normalized metric combining RMSE and R² performance to quantify how well synthetic-trained models substitute for real-trained models:
+\begin{subequations}\label{eq:utility}
+\begin{IEEEeqnarray}{rCl}
+\text{U}_{\text{RMSE}} &=& 
+   \min\!\Bigl(
+   \tfrac{\text{RMSE}_{\text{real}}}{\text{RMSE}_{\text{syn}}},\,1
+   \Bigr)
+   \label{eq:utility_rmse}\\[2pt]
+\text{U}_{R^{2}} &=& 
+   \min\!\Bigl(
+   \tfrac{R^{2}_{\text{syn}}}{R^{2}_{\text{real}}},\,1
+   \Bigr)
+   \label{eq:utility_r2}\\[2pt]
+\text{U}_{\text{model}} &=& 
+   \tfrac{1}{2}\bigl(
+   \text{U}_{\text{RMSE}} + \text{U}_{R^{2}}
+   \bigr)
+   \label{eq:utility_model}\\[2pt]
+\text{U}_{\text{generator}} &=& 
+   \tfrac{1}{n}\sum_{i=1}^{n}
+   \text{U}_{\text{model},i}
+   \label{eq:utility_avg}
+\end{IEEEeqnarray}
+\end{subequations}
 
-Feature Importance Alignment:
+
+
+% \begin{equation}
+% \text{Utility} = 0.5 \times \min\left(\frac{\text{RMSE}_{\text{real}}}{\text{RMSE}_{\text{synthetic}}}, 1.0\right) + 0.5 \times \min\left(\frac{R^2_{\text{synthetic}}}{R^2_{\text{real}}}, 1.0\right)
+% \end{equation}
+
+\textbf{Feature Importance Alignment}:
 To ensure synthetic data preserves operational relationships, we compute the cosine similarity between feature importance vectors from models trained on real ($\mathbf{v}_{\text{real}}$) versus synthetic ($\mathbf{v}_{\text{synthetic}}$) data:
 \begin{equation}
 \text{Alignment} = \frac{\mathbf{v}_{\text{real}} \cdot \mathbf{v}_{\text{synthetic}}}{||\mathbf{v}_{\text{real}}|| \cdot ||\mathbf{v}_{\text{synthetic}}||}
@@ -649,15 +675,13 @@ This paper is based on research conducted within the SynthAIr project, which has
 
 
 
-% add appendix 
 
-\appendix
-\label{sec:appendix}
-
+\appendices
 \section{Generative Models Overview}
-\label{sec:generative_models}
+\label{sec:appendix-generative_models}
 
-Gaussian Copula (GC)
+
+\subsection{Gaussian Copula (GC)}
 A statistical approach that models multivariate dependencies by separating marginal distributions from their dependence structure. This method is particularly suited for mixed-type tabular data, handling both categorical (airports, carriers, aircraft types) and continuous (delays, turnaround times) variables through a unified framework.
 
 The Gaussian copula model operates in two stages:
@@ -688,8 +712,9 @@ where $\Phi_{\mathbf{R}}$ represents the CDF of a multivariate normal distributi
 This approach preserves parametrically-fitted marginal distributions while capturing linear correlations between variables. However, it may struggle with complex non-linear dependencies and rare event combinations that are particularly important in aviation operations.
 
 
-Conditional Tabular GAN (CTGAN) \cite{xu2019modeling}
-A generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
+\subsection{Conditional Tabular GAN (CTGAN)}
+
+CTGAN\cite{xu2019modeling} is a generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
 \begin{itemize}
     \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
     \item \textbf{Conditional generation}: Employs training-by-sampling with log-frequency to address category imbalance
@@ -697,8 +722,9 @@ A generative adversarial network specifically designed for mixed-type tabular da
     \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
 \end{itemize}
 
-TabSyn \cite{zhang2024mixed}
-A two-stage approach combining Variational Autoencoders (VAE) with diffusion models:
+\subsection{TabSyn}
+
+TabSyn \cite{zhang2024mixed} is a two-stage approach combining Variational Autoencoders (VAE) with diffusion models:
 \begin{enumerate}
     \item \textbf{Stage 1 - VAE Training}: Learns continuous latent representations of mixed-type data using:
     \begin{equation}
@@ -708,8 +734,9 @@ A two-stage approach combining Variational Autoencoders (VAE) with diffusion mod
     \item \textbf{Stage 2 - Diffusion in Latent Space}: Applies score-based diffusion to generate new latent vectors, requiring only 20-50 reverse steps compared to thousands in traditional diffusion
 \end{enumerate}
 
-REaLTabFormer \cite{solatorio2023realtabformer}
-A transformer-based model that treats each table row as a sequence of tokens. The architecture leverages:
+\subsection{REaLTabFormer}
+
+REaLTabFormer \cite{solatorio2023realtabformer} is a transformer-based model that treats each table row as a sequence of tokens. The architecture leverages:
 \begin{itemize}
     \item \textbf{GPT-2 backbone}: 6 decoder layers with 768-dimensional embeddings
     \item \textbf{Column-aware tokenization}: Separate vocabularies for each column type
