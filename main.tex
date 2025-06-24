@@ -137,10 +137,10 @@ While substantial progress has been made in both flight delay prediction and syn
 Our methodology, illustrated in Figure \ref{fig:framework}, follows a four-phase experimental framework designed to systematically evaluate synthetic data utility for pre-tactical flight prediction. 
 
 
-\begin{figure*}[t]
+\begin{figure*}[htbp]
     \centering
     \includegraphics[width=\textwidth]{diagrams/overall_framework.pdf}
-    \caption{Experimental framework comprising four phases: (1) Data Preparation - processing 1.74M European flight records and extracting pre-tactical features available at schedule publication; (2) Synthetic Generation - training four generative models and validating statistical properties; (3) Predictive Models - implementing parallel pipelines for baseline (TRTR) and synthetic data evaluation (TSTR) using five regression algorithms; (4) Evaluation - assessing performance on three operational prediction tasks using multiple metrics.}
+    \caption{Experimental framework comprising four phases: (1) Data Preparation - processing 1.74M European flight records and extracting pre-tactical features available at schedule publication; (2) Synthetic Data Generation - training four generative models and validating statistical properties; (3) Predictive Model Training - implementing parallel pipelines for baseline (TRTR) and synthetic data evaluation (TSTR) using five regression algorithms; (4) Performance Evaluation - assessing performance on three operational prediction tasks using multiple metrics.}
     \label{fig:framework}
 \end{figure*}
 
@@ -238,11 +238,11 @@ Four state-of-the-art synthetic data generators were evaluated, each representin
 
 \textbf{Gaussian Copula (GC)} represents the simplest approach, using classical statistical theory to model dependencies between flight variables. For aviation data, it fits appropriate marginal distributions to each feature (e.g., log-normal for delays, categorical for airports) while capturing their correlation structure through a multivariate Gaussian copula. While computationally efficient and requiring minimal training data, its reliance on linear correlations limits its ability to capture the complex non-linear relationships common in flight operations, such as cascading delays or airport-specific congestion patterns.
 
-\textbf{Conditional Tabular GAN (CTGAN)} \cite{xu2019modeling} addresses aviation data's mixed types through specialized preprocessing. Its mode-specific normalization handles the multimodal nature of continuous features like delays (which cluster around zero but have long tails), while training-by-sampling ensures adequate representation of rare categories such as infrequent aircraft types or remote airports. The conditional generation capability proves valuable for creating targeted scenarios, though the adversarial training can be unstable and computationally intensive for large flight datasets.
+\textbf{Conditional Tabular GAN (CTGAN)} \cite{xu2019modeling} addresses aviation data's mixed types through specialized preprocessing. Its mode-specific normalization handles the multimodal nature of continuous features like delays (which cluster around zero but have long tails), while training-by-sampling ensures adequate representation of rare categories. The conditional generation capability proves valuable for creating targeted scenarios, though the adversarial training can be unstable and computationally intensive for large flight datasets.
 
-\textbf{TabSyn} \cite{zhang2024mixed} employs a sophisticated two-stage approach particularly suited to aviation's heterogeneous data. First, a variational autoencoder learns continuous representations that capture relationships between categorical features (carriers, airports) and continuous metrics (delays, durations). Then, a diffusion model in this latent space enables efficient generation requiring only 20-50 denoising steps—orders of magnitude faster than traditional diffusion. This efficiency makes it practical for generating large synthetic flight datasets, though the two-stage architecture adds implementation complexity.
+\textbf{TabSyn} \cite{zhang2024mixed} employs two-stage approach suited to aviation's heterogeneous data. First, a variational autoencoder learns continuous representations that capture relationships between categorical features (carriers, airports) and continuous metrics (delays, durations). Then, a diffusion model in this latent space enables efficient generation requiring only 20-50 denoising steps—orders of magnitude faster than traditional diffusion. This efficiency makes it practical for generating large synthetic flight datasets, though the two-stage architecture adds implementation complexity.
 
-\textbf{REaLTabFormer} \cite{solatorio2023realtabformer} leverages transformer architectures to model each flight record as a sequence of tokens. This approach naturally captures the sequential dependencies in flight data—how airline choice influences aircraft type, which affects turnaround time, which impacts subsequent delays. The model's column-aware tokenization and domain-specific constraints ensure generated values remain operationally valid (e.g., preventing impossible airport-aircraft combinations). While achieving the highest fidelity among evaluated methods, it requires substantial computational resources and training data.
+\textbf{REaLTabFormer} \cite{solatorio2023realtabformer} leverages transformer architectures to model each flight record as a sequence of tokens. This approach captures the sequential dependencies in flight data—how airline choice influences aircraft type, which affects turnaround time, which impacts subsequent delays. The model's column-aware tokenization and domain-specific constraints ensure generated values remain operationally valid. While achieving the highest fidelity among evaluated methods, it requires substantial computational resources and training data.
 
 For detailed architectural specifications, training procedures, and implementation details of each model, see Appendix~\ref{sec:appendix}.
 
@@ -256,9 +256,7 @@ We assess univariate distributional fidelity using metrics tailored to data type
 \begin{equation}
 \text{KS}_{\text{complement}} = 1 - D_{KS}
 \end{equation}
-where $D_{KS}$ represents the maximum distance between empirical cumulative distribution functions. Values approaching 1.0 indicate near-perfect alignment of continuous distributions.
-
-For categorical variables (e.g., carriers, airports), we apply Pearson's Chi-Squared test, converting p-values to a normalized 0-1 scale where higher values signify better frequency matching between real and synthetic categorical distributions.
+where $D_{KS}$ represents the maximum distance between empirical cumulative distribution functions. Values approaching 1.0 indicate near-perfect alignment of continuous distributions. For categorical variables (e.g., carriers, airports), we apply Pearson's Chi-Squared test, converting p-values to a normalized 0-1 scale where higher values signify better frequency matching between real and synthetic categorical distributions.
 
 Correlation Preservation:
 Maintaining inter-feature relationships is crucial for operational validity. We evaluate four correlation metrics:
