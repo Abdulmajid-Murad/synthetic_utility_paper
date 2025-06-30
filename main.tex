@@ -711,15 +711,123 @@ where $\Phi_{\mathbf{R}}$ represents the CDF of a multivariate normal distributi
 This approach preserves parametrically-fitted marginal distributions while capturing linear correlations between variables. However, it may struggle with complex non-linear dependencies and rare event combinations that are particularly important in aviation operations.
 
 
+% \subsection{Conditional Tabular GAN (CTGAN)}
+
+% CTGAN\cite{xu2019modeling} is a generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
+% \begin{itemize}
+%     \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
+%     \item \textbf{Conditional generation}: Employs training-by-sampling with log-frequency to address category imbalance
+%     \item \textbf{PacGAN framework}: Prevents mode collapse by having the discriminator evaluate multiple samples jointly
+%     \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
+% \end{itemize}
+
 \subsection{Conditional Tabular GAN (CTGAN)}
 
-CTGAN\cite{xu2019modeling} is a generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
+CTGAN \cite{xu2019modeling} is a generative adversarial network specifically designed for mixed-type tabular data, addressing the unique challenges of generating realistic flight records with both continuous (delays, durations) and categorical (airports, carriers) variables.
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{diagrams/ctgan.pdf}
+    \caption{CTGAN Architecture for Flight Data Generation.}
+    \label{fig:ctgan_architecture}
+\end{figure*}
+
+\textbf{Architecture Overview:} As illustrated in Figure~\ref{fig:ctgan_architecture}, CTGAN consists of four interconnected components that transform raw flight data into a generative model capable of producing new synthetic samples:
+
+\textbf{1. Data Transformer:} The first component in the pipeline (shown in blue in Figure~\ref{fig:ctgan_architecture}) preprocesses mixed-type data for neural network processing:
 \begin{itemize}
-    \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
-    \item \textbf{Conditional generation}: Employs training-by-sampling with log-frequency to address category imbalance
-    \item \textbf{PacGAN framework}: Prevents mode collapse by having the discriminator evaluate multiple samples jointly
-    \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
+    \item \textbf{Mode-specific Normalization}: For continuous variables, employs a Bayesian Gaussian Mixture Model (BGM) to identify multimodal distributions:
+    \begin{itemize}
+        \item Fits a BGM with up to 10 components using variational inference
+        \item Each value is represented as: (1) normalized scalar within its mode, and (2) one-hot vector indicating the mode
+        \item Prevents gradient vanishing in non-Gaussian distributions common in flight delays
+    \end{itemize}
+    \item \textbf{One-hot Encoding}: Categorical variables (airlines, airports, aircraft types) are encoded as one-hot vectors
 \end{itemize}
+
+\textbf{2. Conditional Mechanism:} The conditional component (shown in red in Figure~\ref{fig:ctgan_architecture}) addresses severe category imbalance in aviation data:
+\begin{itemize}
+    \item \textbf{Training-by-Sampling}: Uses log-frequency sampling to ensure rare categories receive adequate training:
+    \begin{equation}
+    P(c_i) = \frac{\log(f_i) + 1}{\sum_j (\log(f_j) + 1)}
+    \end{equation}
+    where $f_i$ is the frequency of category $i$
+    \item \textbf{Conditional Vector}: Generator receives a one-hot vector indicating which discrete column/value to generate, enabling balanced learning across all categories
+\end{itemize}
+
+\textbf{3. GAN Architecture:} The core generative components (central green section in Figure~\ref{fig:ctgan_architecture}) consist of:
+
+\textbf{Generator Network:} 
+\begin{itemize}
+    \item \textbf{Architecture}: Two residual blocks with batch normalization and ReLU activation
+    \begin{itemize}
+        \item Input: Random noise (128-dim) concatenated with conditional vector
+        \item Hidden layers: 256 neurons each with residual connections
+        \item Output: Mixed activations - tanh for normalized values, Gumbel-softmax for categories
+    \end{itemize}
+    \item \textbf{Residual Block Structure}:
+    \begin{equation}
+    \text{Residual}(x) = \text{Concat}[\text{ReLU}(\text{BN}(\text{FC}(x))), x]
+    \end{equation}
+\end{itemize}
+
+\textbf{Discriminator Network:}
+\begin{itemize}
+    \item \textbf{PacGAN Framework}: Processes 10 samples jointly to prevent mode collapse
+    \item \textbf{Architecture}: Two hidden layers (256 neurons) with LeakyReLU ($\alpha$=0.2) and dropout (0.5)
+    \item \textbf{WGAN-GP Loss}: Wasserstein loss with gradient penalty:
+    \begin{equation}
+    \mathcal{L}_D = -(\mathbb{E}[D(\text{real})] - \mathbb{E}[D(\text{fake})]) + \lambda \cdot GP
+    \end{equation}
+    where the gradient penalty term:
+    \begin{equation}
+    GP = \mathbb{E}_{\hat{x}} \left[ (||\nabla_{\hat{x}} D(\hat{x})||_2 - 1)^2 \right]
+    \end{equation}
+    with $\hat{x}$ interpolated between real and fake samples, and $\lambda = 10$
+\end{itemize}
+
+\textbf{4. Inverse Data Transformer:} The final component (purple in Figure~\ref{fig:ctgan_architecture}) reverses the initial transformations to produce flight data in its original format.
+
+\textbf{Training Methodology:} The training process (detailed in the bottom section of Figure~\ref{fig:ctgan_architecture}) follows these steps:
+\begin{enumerate}
+    \item \textbf{Data Preprocessing}: Transform data using mode-specific normalization and one-hot encoding
+    \item \textbf{Adversarial Training Loop}:
+    \begin{itemize}
+        \item Sample conditional vectors based on log-frequency
+        \item Select real data matching the condition
+        \item Generate fake samples: $G(z, c)$ where $z \sim \mathcal{N}(0, I)$ and $c$ is the condition
+        \item Update discriminator with WGAN-GP loss
+        \item Update generator with combined loss:
+        \begin{equation}
+        \mathcal{L}_G = -\mathbb{E}[D(G(z,c))] + \mathcal{L}_{\text{cond}}
+        \end{equation}
+        where $\mathcal{L}_{\text{cond}}$ is cross-entropy between generated categories and condition
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item Optimizers: Adam with learning rate $2 \times 10^{-4}$, $\beta_1 = 0.5$, $\beta_2 = 0.9$
+    \item Weight decay: $10^{-6}$ for regularization
+    \item Batch size: 500 samples
+    \item Training epochs: 300-500 (determined by loss convergence)
+    \item Discriminator updates per generator update: 1
+    \item Gumbel-softmax temperature: 0.2 for discrete outputs
+\end{itemize}
+
+\textbf{Generation Process:}
+\begin{enumerate}
+    \item For conditional generation: specify discrete column and value
+    \item Create conditional vector from specified condition
+    \item Sample Gaussian noise: $z \sim \mathcal{N}(0, I_{128})$
+    \item Concatenate noise with conditional vector
+    \item Pass through generator to produce normalized outputs
+    \item Apply inverse data transformation to recover original data format
+\end{enumerate}
+
+This architecture enables CTGAN to effectively handle the mixed-type nature of flight data while addressing common challenges such as mode collapse and training instability through its specialized components shown in Figure~\ref{fig:ctgan_architecture}.
+
+
 
 \subsection{TabSyn}
 
