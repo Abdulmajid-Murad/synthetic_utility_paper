@@ -467,7 +467,7 @@ Pre-tactical departure delay prediction emerged as one of the challenging tasks,
     \label{fig:departure_r2}
 \end{figure}
 
-Despite these constraints, clear performance hierarchies emerged among synthetic generators. The RMSE and MAE metrics reveal REaLTabFormer's superiority in preserving the subtle predictive patterns present in scheduled data (Figures~\ref{fig:departure_pre_rmse} and \ref{fig:departure_pre_mae}). REaLTabFormer consistently achieved the lowest error rates, with RMSE values within 4\% of real-data baselines. The transformer architecture's ability to capture long-range dependencies between categorical features (airlines, airports) and temporal patterns proves crucial for this task.
+Despite these constraints, clear performance hierarchies emerged among the synthetic generators. The RMSE and MAE metrics highlight REaLTabFormer's performance advantage in preserving the subtle predictive patterns present in scheduled data (Figures \ref{fig:departure_pre_rmse} and \ref{fig:departure_pre_mae}). REaLTabFormer consistently achieved the lowest error rates, with RMSE values within 4 \% of real-data baselines. The transformer architecture's ability to capture dependencies between categorical features (airlines, airports) and temporal patterns proves crucial for this task.
 
 \begin{figure}[htbp]
     \centering
@@ -485,7 +485,7 @@ Despite these constraints, clear performance hierarchies emerged among synthetic
     \caption{Prediction error metrics for pre-tactical departure delay across models and synthetic data generators.}
 \end{figure}
 
-The utility scores quantify the practical impact of these differences (Figure~\ref{fig:departure_utility}). REaLTabFormer achieved a utility score of 0.96, indicating that models trained on its synthetic data retain 96\% of the predictive capability of models trained on real data. This represents a remarkable preservation of predictive relationships given the task's inherent difficulty. TabSyn's utility dropped more significantly to 0.76, suggesting that departure delay patterns require sophisticated modeling of rare events and edge cases that simpler diffusion approaches struggle to capture consistently.
+The utility scores quantify the practical impact of these differences (Figure \ref{fig:departure_utility}). REaLTabFormer achieved a utility score of 0.96, indicating that models trained on its synthetic data retain 96 \% of the predictive capability of models trained on real data. This represents a strong preservation of predictive relationships given the task's inherent difficulty. TabSyn's utility dropped more significantly to 0.76, suggesting that departure-delay patterns require sophisticated modeling of rare events and edge cases that simpler diffusion approaches struggle to capture consistently.
 
 \begin{figure}[htbp]
     \centering
@@ -494,7 +494,7 @@ The utility scores quantify the practical impact of these differences (Figure~\r
     \label{fig:departure_utility}
 \end{figure}
 
-Feature importance analysis reveals that scheduled hour emerged as the overwhelmingly dominant predictor (Figure~\ref{fig:departure_features}), capturing well-known operational patterns: morning peak congestion, midday lulls, and evening cascade effects where early delays propagate through the network. Airport features remained important but with reduced relative weight compared to temporal factors, reflecting the systematic nature of delay patterns across different hubs.
+Feature importance analysis reveals that scheduled hour emerged as the dominant predictor (Figure~\ref{fig:departure_features}), capturing well-known operational patterns: morning peak congestion, midday lulls, and evening cascade effects where early delays propagate through the network. Airport features remained important but with reduced relative weight compared to temporal factors, reflecting the systematic nature of delay patterns across different hubs.
 
 \begin{figure}[htbp]
     \centering
@@ -541,7 +541,7 @@ The error metrics demonstrate that even under these challenging conditions, synt
     \caption{Prediction error metrics for pre-tactical arrival delay across models and synthetic data generators.}
 \end{figure}
 
-Despite the increased task complexity, REaLTabFormer maintained  utility performance at 0.95 (Figure~\ref{fig:arrival_pre_utility}), demonstrating robustness across different prediction scenarios. This consistency suggests that the transformer-based approach successfully captures the underlying statistical structure that relates scheduled flight information to eventual arrival performance, even when that relationship becomes increasingly attenuated by intervening factors.
+Despite the increased task complexity, REaLTabFormer maintained  utility performance at 0.95 (Figure~\ref{fig:arrival_pre_utility}), demonstrating robustness across different prediction scenarios. This consistency suggests that the transformer-based approach captures the underlying statistical structure that relates scheduled flight information to eventual arrival performance, even when that relationship becomes increasingly attenuated by intervening factors.
 
 \begin{figure}[htbp]
     \centering
@@ -550,7 +550,7 @@ Despite the increased task complexity, REaLTabFormer maintained  utility perform
     \label{fig:arrival_pre_utility}
 \end{figure}
 
-Feature importance analysis for arrival delays revealed more complex patterns than departure delay prediction (Figure~\ref{fig:arrival_features}). Scheduled flight duration emerged as an additional significant predictor alongside temporal and airport features, reflecting the reality that longer flights have more opportunities for en-route delays and recovery. The distribution of importance across multiple features indicates that arrival delay prediction requires modeling interactions between temporal, spatial, and operational characteristics simultaneously.
+Feature importance analysis for arrival delays revealed a slightly different pattern than departure delay prediction (Figure~\ref{fig:arrival_features}). Scheduled flight duration emerged as an additional significant predictor alongside temporal and airport features, reflecting the reality that longer flights have more opportunities for en-route delays and recovery. The distribution of importance across multiple features indicates that arrival delay prediction requires modeling interactions between temporal, spatial, and operational characteristics simultaneously.
 
 \begin{figure}[htbp]
     \centering
