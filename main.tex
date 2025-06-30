@@ -597,7 +597,7 @@ The error metrics revealed pronounced performance differences between synthetic 
     \caption{Prediction error metrics for pre-tactical turnaround time across models and synthetic data generators.}
 \end{figure}
 
-The utility score analysis confirmed turnaround prediction as the most successful application of synthetic data (Figure~\ref{fig:turnaround_pre_utility}). REaLTabFormer achieved a utility score of 0.97, followed by TabSyn at 0.93. These high scores indicate that for the critical operational task of turnaround planning, synthetic data can serve as an effective substitute for proprietary operational records, enabling advanced analytics capabilities for organizations without access to comprehensive historical datasets.
+The utility score analysis confirmed turnaround prediction as the most successful application of synthetic data (Figure~\ref{fig:turnaround_pre_utility}). REaLTabFormer achieved a utility score of 0.97, followed by TabSyn at 0.93. These high scores indicate that for the operational task of turnaround planning, synthetic data can serve as an effective substitute for proprietary operational records, enabling advanced analytics capabilities for organizations without access to comprehensive historical datasets.
 
 \begin{figure}[htbp]
     \centering
@@ -606,7 +606,7 @@ The utility score analysis confirmed turnaround prediction as the most successfu
     \label{fig:turnaround_pre_utility}
 \end{figure}
 
-Feature importance analysis revealed that scheduled hour/Duration and airport identifiers emerged as the dominant predictors across all data sources (Figure~\ref{fig:turnaround_pre_features}). This pattern aligns with operational knowledge: turnaround processes exhibit significant time-of-day variations due to staffing levels, gate availability, and passenger flow patterns. Airport-specific effects capture differences in terminal layouts, ground handling procedures, and infrastructure constraints that systematically influence turnaround efficiency.
+Feature importance analysis revealed that scheduled hour/Duration and airport identifiers as the dominant predictors across all data sources (Figure~\ref{fig:turnaround_pre_features}). This pattern aligns with operational knowledge: turnaround processes exhibit significant time-of-day variations due to staffing levels, gate availability, and passenger flow patterns. Airport-specific effects capture differences in terminal layouts, ground handling procedures, and infrastructure constraints that systematically influence turnaround efficiency.
 
 \begin{figure}[htbp]
     \centering
@@ -615,7 +615,7 @@ Feature importance analysis revealed that scheduled hour/Duration and airport id
     \label{fig:turnaround_pre_features}
 \end{figure}
 
-The feature importance alignment (Figure~\ref{fig:turnaround_pre_alignment}) shows that  REaLTabFormer and TabSyn achieved perfect alignment scores (1.00), ensuring that models trained on their synthetic data identify precisely the same operational drivers as real-data models. This preservation of causal relationships is crucial for operational applications where understanding which factors drive turnaround variations is as important as prediction accuracy itself.
+The feature importance alignment (Figure~\ref{fig:turnaround_pre_alignment}) shows that  REaLTabFormer and TabSyn achieved perfect alignment scores (1.00), ensuring that models trained on their synthetic data identify the same operational drivers as real-data models. This preservation of causal relationships is crucial for operational applications where understanding which factors drive turnaround variations is as important as prediction accuracy itself.
 
 \begin{figure}[htbp]
     \centering
@@ -626,9 +626,9 @@ The feature importance alignment (Figure~\ref{fig:turnaround_pre_alignment}) sho
 
 \subsection{Cross-Task Performance Analysis}
 
-Analyzing results across all pre-tactical prediction tasks reveals several critical patterns that inform both synthetic data selection and operational expectations:
+Analyzing results across all pre-tactical prediction tasks reveals several patterns that inform both synthetic data selection and operational expectations:
 
-\textbf{Consistent Generator Hierarchy:} Across all tasks, the performance ranking remained stable: REaLTabFormer (94-97\% utility) $>$ TabSyn (64-93\%) $>$ CTGAN (60-74\%) $>$ Gaussian Copula (55-68\%). This consistency suggests fundamental differences in how each approach captures the complex relationships present in aviation operational data.
+\textbf{Consistent Generator Hierarchy:} Across all tasks, the performance ranking remained stable: REaLTabFormer (95-97\% utility) $>$ TabSyn (64-93\%) $>$ CTGAN (60-74\%) $>$ Gaussian Copula (42-56\%). This consistency suggests fundamental differences in how each approach captures the relationships present in aviation operational data.
 
 
 \textbf{Feature Relationship Preservation:} Advanced generators (REaLTabFormer, TabSyn) consistently preserved feature importance patterns across all tasks, while simpler methods showed task-dependent degradation. This preservation is crucial for operational deployment, where understanding causal relationships guides resource allocation and process improvement decisions.
@@ -637,9 +637,9 @@ Analyzing results across all pre-tactical prediction tasks reveals several criti
 
 \subsection{Operational Implications}
 
-These findings carry significant implications for aviation stakeholders:
+These findings carry important implications for aviation stakeholders:
 
-\textbf{Strategic Planning Viability:} The high utility scores (94-97\%) achieved by REaLTabFormer indicate that synthetic data can effectively support critical pre-tactical decisions including crew scheduling, gate planning, and resource allocation made hours to days in advance. This capability could democratize advanced analytics across the industry.
+\textbf{Strategic Planning Viability:} The high utility scores (95-97\%) achieved by REaLTabFormer indicate that synthetic data can effectively support critical pre-tactical decisions including crew scheduling, gate planning, and resource allocation made hours to days in advance. This capability could democratize advanced analytics across the industry.
 
 \textbf{Research and Development Acceleration:} Preserved feature relationships make synthetic data valuable for algorithm development and benchmarking, allowing researchers to prototype pre-tactical prediction methods without accessing proprietary operational schedules. This could accelerate innovation in aviation analytics.
 
