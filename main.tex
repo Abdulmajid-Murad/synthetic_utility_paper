@@ -407,7 +407,7 @@ To ensure synthetic data preserves operational relationships, we compute the cos
 
 \section{Results and Discussion}
 
-\subsection{Validating Synthetic Data Fidelity}
+\subsection{Synthetic Data Fidelity}
 \label{sec:fidelity_results}
 
 Before evaluating predictive utility, we assessed the statistical fidelity of each synthetic data generator to ensure the generated data maintains essential properties of real flight operations. Table~\ref{tab:fidelity_metrics} presents twelve complementary metrics measuring different aspects of synthetic data quality.
@@ -458,7 +458,7 @@ All generators successfully preserve correlation structures ($>$0.97 across Pear
 
 \subsection{Departure Delay Prediction}
 
-Pre-tactical departure delay prediction emerged as one of the most challenging tasks, with real-data models achieving R² values between 0.10 and 0.30 (Figure~\ref{fig:departure_r2}). This limited predictability reflects the numerous external factors influencing departure times—weather conditions, air traffic flow restrictions, crew availability, and technical issues—that are not captured in scheduled information alone. The inherent stochasticity of these factors creates a fundamental ceiling on pre-tactical prediction accuracy, regardless of data quality.
+Pre-tactical departure delay prediction emerged as one of the challenging tasks, with real-data models achieving R² values between 0.10 and 0.30 (Figure~\ref{fig:departure_r2}). This limited predictability reflects the numerous external factors influencing departure times—weather conditions, air traffic flow restrictions, crew availability, and technical issues—that are not captured in scheduled information alone. The inherent stochasticity of these factors creates a fundamental ceiling on pre-tactical prediction accuracy, regardless of data quality.
 
 \begin{figure}[htbp]
     \centering
@@ -724,15 +724,74 @@ CTGAN\cite{xu2019modeling} is a generative adversarial network specifically desi
 
 \subsection{TabSyn}
 
-TabSyn \cite{zhang2024mixed} is a two-stage approach combining Variational Autoencoders (VAE) with diffusion models:
-\begin{enumerate}
-    \item \textbf{Stage 1 - VAE Training}: Learns continuous latent representations of mixed-type data using:
+TabSyn \cite{zhang2024mixed} is a two-stage generative model that combines Variational Autoencoders (VAE) with diffusion models to efficiently synthesize mixed-type tabular data. Unlike traditional diffusion approaches that operate directly on data space, TabSyn applies diffusion in a learned latent space, significantly improving computational efficiency.
+
+\textbf{Architecture Overview:} The model consists of three interconnected components:
+
+\textbf{1. VAE Encoder:} Transforms tabular data into continuous latent representations through:
+\begin{itemize}
+    \item \textbf{Column-wise Tokenization}: Each column is processed independently based on its type:
+    \begin{itemize}
+        \item Numerical features: Linear transformation with dimension matched to feature importance
+        \item Categorical features: Learned embedding lookup tables with dimensions proportional to cardinality
+    \end{itemize}
+    \item \textbf{Transformer Encoder}: Processes token embeddings through self-attention layers to capture inter-column dependencies. The encoder outputs parameters $(\mu, \sigma)$ of the latent distribution using the reparameterization trick
+\end{itemize}
+
+\textbf{2. Latent Space Diffusion:} Operates on the continuous latent vectors from the VAE:
+\begin{itemize}
+    \item \textbf{Forward Process}: Gradually adds Gaussian noise following a linear schedule
+    \item \textbf{Denoising Network}: MLP-based architecture with positional embeddings for noise level:
     \begin{equation}
-    \mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \cdot \mathcal{L}_{\text{KL}}
+    \mathcal{L}_{\text{EDM}} = \mathbb{E}_{z_0, t, \epsilon} \left[ \|s_\theta(z_t, t) - \epsilon\|_2^2 \right]
     \end{equation}
-    where $\beta$ is adaptively scheduled during training
-    \item \textbf{Stage 2 - Diffusion in Latent Space}: Applies score-based diffusion to generate new latent vectors, requiring only 20-50 reverse steps compared to thousands in traditional diffusion
+    where $z_t$ is the noisy latent at time $t$ and $s_\theta$ is the score network
+    \item \textbf{Efficient Sampling}: Requires only 20-50 reverse diffusion steps compared to thousands in pixel-space diffusion
+\end{itemize}
+
+\textbf{3. VAE Decoder:} Reconstructs tabular data from latent representations:
+\begin{itemize}
+    \item Transformer decoder with architecture mirroring the encoder
+    \item Column-specific detokenization: Linear projections for numerical features, softmax for categorical
+\end{itemize}
+
+\textbf{Training Methodology:} TabSyn employs a two-phase training process:
+
+\textbf{Phase 1 - VAE Training:}
+\begin{equation}
+\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta(t) \cdot \mathcal{L}_{\text{KL}}
+\end{equation}
+where:
+\begin{itemize}
+    \item $\mathcal{L}_{\text{recon}} = \text{MSE}(\text{numerical}) + \text{CE}(\text{categorical})$
+    \item $\beta(t)$ follows an adaptive schedule: starts at $10^{-2}$, decays to $10^{-5}$ with factor 0.7
+    \item Trained for 200 epochs with learning rate $10^{-3}$ and batch size 8192
+\end{itemize}
+
+\textbf{Phase 2 - Diffusion Training:}
+\begin{itemize}
+    \item Pre-trained VAE encoder generates latent embeddings for all training data
+    \item Embeddings are normalized (mean-centered and scaled)
+    \item MLP diffusion model trained for 1000 epochs with learning rate $3 \times 10^{-4}$
+\end{itemize}
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item Token dimension: 8 per feature
+    \item Transformer layers: 2 with single attention head
+    \item Hidden dimension factor: 32
+    \item MLP layers: 3 with SiLU activations and hidden dimension 1024
+\end{itemize}
+
+\textbf{Generation Process:}
+\begin{enumerate}
+    \item Sample initial noise $z_T \sim \mathcal{N}(0, I)$
+    \item Apply reverse diffusion for $T=50$ steps
+    \item Transform final $z_0$ through VAE decoder to obtain synthetic tabular data
 \end{enumerate}
+
+This architecture enables TabSyn to efficiently capture complex dependencies in mixed-type data while maintaining computational tractability for large-scale generation tasks.
+
 
 \subsection{REaLTabFormer}
 
