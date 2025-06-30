@@ -655,12 +655,11 @@ These findings carry important implications for aviation stakeholders:
 
 
 
-
-
 \section{Conclusion}
 
-This study demonstrates that high-quality synthetic flight data can effectively substitute for real operational data in pre-tactical prediction tasks. Advanced generators, particularly REaLTabFormer, achieve 95-97\% of real-data performance while preserving critical feature relationships. However, our results also highlight fundamental predictability limits in pre-tactical scenarios—even with perfect data, uncertainty in flight operations restricts prediction accuracy.
-These findings support the operational deployment of synthetic data for strategic planning, research, and algorithm development in aviation. Organizations can leverage synthetic data to develop and validate pre-tactical prediction models without accessing sensitive operational records, democratizing advanced analytics capabilities across the industry. As the aviation industry continues to emphasize data-driven decision-making, high-fidelity synthetic data offers a pathway to broader participation in operational optimization while maintaining commercial confidentiality.
+This study evaluated synthetic flight data as an alternative to real operational data for pre-tactical aviation predictions. Among four generators tested, REaLTabFormer achieved 95-97\% of real-data performance across turnaround time, departure delay, and arrival delay predictions while preserving critical feature relationships. Additionally, comprehensive fidelity assessments confirmed that synthetic data maintained essential statistical properties—including distributional similarity, correlation structures, and joint dependencies—before deployment in prediction tasks.
+The analysis revealed fundamental predictability limits in pre-tactical scenarios—R² values peaked at 0.44 even with real data, reflecting inherent operational uncertainties when only scheduled information is available. This establishes realistic baselines for any predictive system regardless of data source.
+These findings indicate that high-fidelity synthetic data can enable organizations without access to proprietary records to develop pre-tactical prediction capabilities. The consistent performance hierarchy (REaLTabFormer $>$ TabSyn $>$ CTGAN $>$ Gaussian Copula) provides guidance for method selection based on accuracy requirements. However, stakeholders should design planning processes that accommodate prediction uncertainty through appropriate buffers rather than expecting precise forecasts, given the stochastic nature of aviation operations.
 
 
 \section*{Acknowledgment}
