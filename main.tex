@@ -711,24 +711,14 @@ where $\Phi_{\mathbf{R}}$ represents the CDF of a multivariate normal distributi
 This approach preserves parametrically-fitted marginal distributions while capturing linear correlations between variables. However, it may struggle with complex non-linear dependencies and rare event combinations that are particularly important in aviation operations.
 
 
-% \subsection{Conditional Tabular GAN (CTGAN)}
-
-% CTGAN\cite{xu2019modeling} is a generative adversarial network specifically designed for mixed-type tabular data. Key innovations include:
-% \begin{itemize}
-%     \item \textbf{Mode-specific normalization}: Uses Bayesian Gaussian Mixture Models to handle multimodal continuous distributions
-%     \item \textbf{Conditional generation}: Employs training-by-sampling with log-frequency to address category imbalance
-%     \item \textbf{PacGAN framework}: Prevents mode collapse by having the discriminator evaluate multiple samples jointly
-%     \item \textbf{WGAN-GP loss}: Ensures training stability through gradient penalty regularization
-% \end{itemize}
-
 \subsection{Conditional Tabular GAN (CTGAN)}
 
 CTGAN \cite{xu2019modeling} is a generative adversarial network specifically designed for mixed-type tabular data, addressing the unique challenges of generating realistic flight records with both continuous (delays, durations) and categorical (airports, carriers) variables.
 
 \begin{figure*}[htbp]
     \centering
-    \includegraphics[width=0.9\linewidth]{diagrams/ctgan.pdf}
-    \caption{CTGAN Architecture for Flight Data Generation.}
+    \includegraphics[width=\linewidth]{diagrams/ctgan.pdf}
+    \caption{CTGAN Architecture for Flight Data Generation. The diagram illustrates the complete pipeline for synthetic flight data generation. Starting with flight input data (left), the system transforms it using mode-specific normalization for continuous variables and one-hot encoding for discrete columns like airline codes and airports. The conditional mechanism employs training-by-sampling with log-frequency to address category imbalance. The GAN architecture consists of a generator (combining random noise with conditional vectors) and discriminator (using PacGAN and WGAN-GP loss). Finally, the inverse data transformer converts the generator's output back into realistic flight data format, preserving the complex statistical relationships present in the original data.}
     \label{fig:ctgan_architecture}
 \end{figure*}
 
@@ -828,87 +818,180 @@ CTGAN \cite{xu2019modeling} is a generative adversarial network specifically des
 This architecture enables CTGAN to effectively handle the mixed-type nature of flight data while addressing common challenges such as mode collapse and training instability through its specialized components shown in Figure~\ref{fig:ctgan_architecture}.
 
 
-
 \subsection{TabSyn}
 
-TabSyn \cite{zhang2024mixed} is a two-stage generative model that combines Variational Autoencoders (VAE) with diffusion models to efficiently synthesize mixed-type tabular data. Unlike traditional diffusion approaches that operate directly on data space, TabSyn applies diffusion in a learned latent space, significantly improving computational efficiency.
+TabSyn \cite{zhang2024mixed} addresses the challenge of synthesizing mixed-type tabular data by decoupling representation learning from sample generation. Rather than applying diffusion directly to raw columns—an approach that struggles with complex inter-column dependencies and often requires thousands of sampling steps—TabSyn implements a two-stage pipeline: first mapping data to a continuous latent space via a Variational Autoencoder (VAE), then applying score-based diffusion in this regularized embedding space.
 
-\textbf{Architecture Overview:} The model consists of three interconnected components:
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{diagrams/tabsyn.pdf}
+    \caption{TabSyn architecture for flight data generation. The model employs a two-stage pipeline with three main components: (1) VAE Encoder (left, red) transforms mixed-type flight records into continuous latent vectors through column-wise tokenization and transformer-based encoding; (2) Latent Space Diffusion (center, blue) applies score-based denoising with a linear noise schedule, enabling efficient sampling in 20-50 steps; (3) VAE Decoder (right, green) reconstructs synthetic flight records through transformer decoding and column-specific detokenization.}
+    \label{fig:tabsyn_architecture}
+\end{figure*}
 
-\textbf{1. VAE Encoder:} Transforms tabular data into continuous latent representations through:
+\textbf{Architecture Overview:} As illustrated in Figure~\ref{fig:tabsyn_architecture}, TabSyn consists of three integrated components that work together to transform raw flight data into high-quality synthetic records:
+
+\textbf{1. VAE Encoder Module:} The encoder (shown in red in Figure~\ref{fig:tabsyn_architecture}) transforms raw flight data into continuous latent representations through two stages:
 \begin{itemize}
-    \item \textbf{Column-wise Tokenization}: Each column is processed independently based on its type:
-    \begin{itemize}
-        \item Numerical features: Linear transformation with dimension matched to feature importance
-        \item Categorical features: Learned embedding lookup tables with dimensions proportional to cardinality
-    \end{itemize}
-    \item \textbf{Transformer Encoder}: Processes token embeddings through self-attention layers to capture inter-column dependencies. The encoder outputs parameters $(\mu, \sigma)$ of the latent distribution using the reparameterization trick
+    \item \textbf{Column-wise Tokenizer}: Processes each column independently based on its data type. For numerical attributes (e.g., flight duration, delays), a linear transformation maps values to token embeddings. For categorical attributes (e.g., aircraft type, airports), learned embedding lookup tables transform each category into dense vectors. The combined token dimension is set to 8 for aviation datasets.
+    
+    \item \textbf{Transformer Encoder}: After tokenization, embeddings are processed through a 2-layer transformer with single-head attention. This architecture captures non-linear relationships between flight attributes through self-attention mechanisms with a hidden dimension expansion factor of 32. The encoder outputs distribution parameters $(\mu, \sigma)$ for each input record, from which latent vectors are sampled using the reparameterization trick.
 \end{itemize}
 
-\textbf{2. Latent Space Diffusion:} Operates on the continuous latent vectors from the VAE:
+\textbf{2. Latent Space Diffusion Module:} The diffusion component (blue section in Figure~\ref{fig:tabsyn_architecture}) operates entirely in the continuous latent space:
 \begin{itemize}
-    \item \textbf{Forward Process}: Gradually adds Gaussian noise following a linear schedule
-    \item \textbf{Denoising Network}: MLP-based architecture with positional embeddings for noise level:
+    \item \textbf{Forward Process}: Gradually corrupts latent vectors by adding Gaussian noise following a linear schedule, which has been shown to be optimal for this latent space formulation.
+    
+    \item \textbf{Denoising Network}: A 3-layer MLP with SiLU activations and 1024 hidden dimensions learns to reverse the diffusion process. The network incorporates positional embeddings to encode the noise level at each step. Training minimizes the Elucidating Diffusion Model (EDM) loss:
     \begin{equation}
-    \mathcal{L}_{\text{EDM}} = \mathbb{E}_{z_0, t, \epsilon} \left[ \|s_\theta(z_t, t) - \epsilon\|_2^2 \right]
+    \mathcal{L}_{\text{EDM}} = \mathbb{E}_{z_0, t, \epsilon} \left[ \lambda(t) \|s_\theta(z_t, t) - \epsilon\|_2^2 \right]
     \end{equation}
-    where $z_t$ is the noisy latent at time $t$ and $s_\theta$ is the score network
-    \item \textbf{Efficient Sampling}: Requires only 20-50 reverse diffusion steps compared to thousands in pixel-space diffusion
+    where $z_t$ is the noisy latent at time $t$, $s_\theta$ is the denoising network, and $\lambda(t)$ is a weighting function derived from the noise schedule.
+    
+    \item \textbf{Efficient Sampling}: The linear noise schedule enables generation with only 20-50 reverse diffusion steps, compared to thousands required by traditional diffusion approaches operating in data space.
 \end{itemize}
 
-\textbf{3. VAE Decoder:} Reconstructs tabular data from latent representations:
+\textbf{3. VAE Decoder Module:} The decoder (green section in Figure~\ref{fig:tabsyn_architecture}) mirrors the encoder structure to reconstruct tabular data:
 \begin{itemize}
-    \item Transformer decoder with architecture mirroring the encoder
-    \item Column-specific detokenization: Linear projections for numerical features, softmax for categorical
+    \item \textbf{Transformer Decoder}: Processes sampled latent vectors through 2 transformer layers with identical configuration to the encoder, maintaining learned interdependencies while reconstructing token-level representations.
+    
+    \item \textbf{Column Detokenizer}: Maps token representations back to original data types using linear projections for numerical attributes and softmax layers for categorical attributes, ensuring type-appropriate reconstruction.
 \end{itemize}
 
-\textbf{Training Methodology:} TabSyn employs a two-phase training process:
+\textbf{Training Methodology:} TabSyn employs a sequential two-phase training process (bottom section of Figure~\ref{fig:tabsyn_architecture}):
 
 \textbf{Phase 1 - VAE Training:}
+The VAE is trained end-to-end with an adaptive KL-divergence weighting:
 \begin{equation}
 \mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta(t) \cdot \mathcal{L}_{\text{KL}}
 \end{equation}
 where:
 \begin{itemize}
-    \item $\mathcal{L}_{\text{recon}} = \text{MSE}(\text{numerical}) + \text{CE}(\text{categorical})$
-    \item $\beta(t)$ follows an adaptive schedule: starts at $10^{-2}$, decays to $10^{-5}$ with factor 0.7
-    \item Trained for 200 epochs with learning rate $10^{-3}$ and batch size 8192
+    \item Reconstruction loss combines MSE for numerical features and cross-entropy for categorical features
+    \item $\beta(t)$ follows an adaptive schedule: initialized at $10^{-2}$, decaying to $10^{-5}$ with factor 0.7 every 5 epochs if above minimum
+    \item Training runs for 200 epochs with Adam optimizer (learning rate $10^{-3}$) and batch size 8192
 \end{itemize}
 
-\textbf{Phase 2 - Diffusion Training:}
+\textbf{Phase 2 - Diffusion Model Training:}
 \begin{itemize}
-    \item Pre-trained VAE encoder generates latent embeddings for all training data
-    \item Embeddings are normalized (mean-centered and scaled)
-    \item MLP diffusion model trained for 1000 epochs with learning rate $3 \times 10^{-4}$
-\end{itemize}
-
-\textbf{Implementation Details:}
-\begin{itemize}
-    \item Token dimension: 8 per feature
-    \item Transformer layers: 2 with single attention head
-    \item Hidden dimension factor: 32
-    \item MLP layers: 3 with SiLU activations and hidden dimension 1024
+    \item The pre-trained VAE encoder (with frozen weights) generates latent embeddings for all training data
+    \item Embeddings are normalized by subtracting mean and scaling by factor 2
+    \item The MLP diffusion model trains for 1000 epochs with learning rate $3 \times 10^{-4}$
+    \item Early stopping with patience of 500 epochs based on validation loss
 \end{itemize}
 
 \textbf{Generation Process:}
 \begin{enumerate}
-    \item Sample initial noise $z_T \sim \mathcal{N}(0, I)$
-    \item Apply reverse diffusion for $T=50$ steps
-    \item Transform final $z_0$ through VAE decoder to obtain synthetic tabular data
+    \item Sample initial noise: $z_T \sim \mathcal{N}(0, I)$ matching VAE latent dimensions
+    \item Apply discretized reverse SDE for $T$ steps (typically 50):
+    \begin{equation}
+    z_{t-1} = z_t - \sigma_t(\sigma_t - \sigma_{t-1}) \cdot s_\theta(z_t, \sigma_t)
+    \end{equation}
+    \item Scale and shift final $z_0$ to match training embedding distribution
+    \item Pass through VAE decoder to obtain synthetic tabular records
 \end{enumerate}
 
-This architecture enables TabSyn to efficiently capture complex dependencies in mixed-type data while maintaining computational tractability for large-scale generation tasks.
-
+This architecture enables TabSyn to capture complex dependencies in mixed-type aviation data while maintaining computational efficiency through its latent space formulation, making it practical for generating large-scale synthetic flight datasets.
 
 \subsection{REaLTabFormer}
 
-REaLTabFormer \cite{solatorio2023realtabformer} is a transformer-based model that treats each table row as a sequence of tokens. The architecture leverages:
+
+REaLTabFormer \cite{solatorio2023realtabformer} leverages transformer architectures originally designed for natural language processing to generate synthetic tabular data. Unlike traditional tabular generators that process columns independently, REaLTabFormer treats each flight record as a sequence of tokens, enabling the model to capture complex dependencies between features through autoregressive generation.
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{diagrams/rtf.pdf}
+    \caption{REaLTabFormer architecture for tabular flight data generation. The pipeline consists of four main components: (1) Data Transformer applies mode-specific normalization for continuous variables and column tokenization for categorical fields; (2) GPT-2 Autoregressive Model with 6 transformer decoder layers generates flight records row-by-row, token-by-token; (3) Regularization component implements target masking to prevent memorization; (4) Overfitting Detection uses Q$_\delta$ statistic and Distance to Closest Record (DCR) measurements to ensure model quality. The Inverse Data Transformer converts generated tokens back into structured flight data format.}
+    \label{fig:rtf_architecture}
+\end{figure*}
+
+\textbf{Architecture Overview:} As illustrated in Figure~\ref{fig:rtf_architecture}, REaLTabFormer consists of four interconnected components that transform flight data into token sequences and generate new records through autoregressive prediction:
+
+\textbf{1. Data Transformer:} The data transformer (blue section in Figure~\ref{fig:rtf_architecture}) preprocesses mixed-type flight data into tokenized representations:
 \begin{itemize}
-    \item \textbf{GPT-2 backbone}: 6 decoder layers with 768-dimensional embeddings
-    \item \textbf{Column-aware tokenization}: Separate vocabularies for each column type
-    \item \textbf{Regularization mechanisms}: Random masking (10\%) and bootstrap-based $Q_\delta$ testing to prevent memorization
-    \item \textbf{Constrained sampling}: Domain-specific token filtering during generation
+    \item \textbf{Mode-specific Normalization}: For continuous variables (delays, durations, scheduled times):
+    \begin{itemize}
+        \item Applies text-based representation strategies tailored to each data type
+        \item Numeric values undergo precision-controlled string conversion and are split into fixed-length substrings (default single-character tokens)
+        \item Datetime columns are converted to Unix timestamps, shifted by column mean to reduce scale, then processed through the numeric pipeline
+    \end{itemize}
+    \item \textbf{Column Tokenization}: For categorical variables (airlines, airports, aircraft types):
+    \begin{itemize}
+        \item Creates column-specific vocabulary mappings
+        \item Preserves unique value distributions within each categorical column
+        \item Enables the model to learn column-specific patterns and constraints
+    \end{itemize}
 \end{itemize}
 
+\textbf{2. GPT-2 Autoregressive Model:} The core generative component (red section in Figure~\ref{fig:rtf_architecture}) uses a GPT-2 architecture optimized for tabular data:
+\begin{itemize}
+    \item \textbf{Model Configuration}: 
+    \begin{itemize}
+        \item 6 transformer decoder layers (DistilGPT-2 scale)
+        \item 768-dimensional embeddings with 12 attention heads
+        \item Special token handling for sequence boundaries ([BOS], [EOS]) and missing values
+        \item Maximum position embeddings adjusted to accommodate the longest tokenized records
+    \end{itemize}
+    \item \textbf{Row-wise Generation}: Each flight record is treated as a sequence where:
+    \begin{itemize}
+        \item Tokens are generated left-to-right, conditioned on all previous tokens
+        \item The model learns to predict $P(x_i | x_1, ..., x_{i-1})$ for each token position
+        \item This autoregressive approach naturally captures dependencies between features
+    \end{itemize}
+\end{itemize}
+
+\textbf{3. Regularization Mechanism:} The regularization component (orange section in Figure~\ref{fig:rtf_architecture}) prevents overfitting and memorization:
+\begin{itemize}
+    \item \textbf{Target Masking}: Randomly replaces 10\% of tokens with [RMASK] tokens during training
+    \item Forces the model to learn contextual relationships rather than memorizing exact patterns
+    \item The mask rate parameter controls regularization strength
+\end{itemize}
+
+\textbf{4. Overfitting Detection:} The monitoring system (bottom orange section in Figure~\ref{fig:rtf_architecture}) ensures generation quality:
+\begin{itemize}
+    \item \textbf{Q$_\delta$ Statistic}: Measures dissimilarity between synthetic and real data distributions:
+    \begin{equation}
+    Q_\delta = \frac{1}{N}\sum_{q} |p_q - q|
+    \end{equation}
+    where $q$ is a quantile in the evaluation set and $p_q$ is the proportion of synthetic samples below the value at quantile $q$
+    \item \textbf{Distance to Closest Record (DCR)}: Evaluates whether synthetic samples are copies of training data
+    \item \textbf{Statistical Bootstrapping}: Establishes data-specific thresholds through 500 bootstrap rounds
+    \item Training stops when the statistic breaches its threshold in consecutive checks
+\end{itemize}
+
+\textbf{Training Methodology:}
+\begin{enumerate}
+    \item \textbf{Data Preprocessing}: Transform flight data using mode-specific strategies for continuous variables and tokenization for categorical columns
+    \item \textbf{Vocabulary Construction}: Build column-specific vocabularies with special tokens
+    \item \textbf{Autoregressive Training}: Train the model to predict next token given previous tokens:
+    \begin{equation}
+    \mathcal{L} = -\sum_{i=1}^{n} \log P(x_i | x_1, ..., x_{i-1})
+    \end{equation}
+    \item \textbf{Overfitting Monitoring}: Evaluate Q$_\delta$ statistic every 5 epochs and save checkpoints at optimal points
+\end{enumerate}
+
+\textbf{Generation Process:}
+\begin{enumerate}
+    \item Initialize with beginning-of-sequence token [BOS]
+    \item For each position in the sequence:
+    \begin{itemize}
+        \item Feed current sequence through the model
+        \item Apply column-aware token constraints to ensure valid domain values
+        \item Sample next token from the constrained output distribution
+    \end{itemize}
+    \item Continue until end-of-sequence token [EOS] is generated
+    \item Process generated token sequences through inverse data transformer
+    \item Reconstruct numerical values from partitioned tokens and convert categorical tokens to original representations
+\end{enumerate}
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item \textbf{Training Configuration}: Batch size 64 with gradient accumulation steps of 4 (effective batch size 256), learning rate $2 \times 10^{-4}$ with AdamW optimizer
+    \item \textbf{Tokenization Strategy}: Single-character partitioning for numerical values provides fine-grained control during generation
+    \item \textbf{Constrained Generation}: Column-aware token filtering prevents generation of invalid values (e.g., non-existent airport codes)
+    \item \textbf{Early Stopping}: Bootstrap-based thresholds with patience of 2 consecutive evaluations above threshold
+\end{itemize}
+
+The architecture's strength lies in its ability to model tabular data as sequences, leveraging the proven capabilities of transformer architectures while incorporating domain-specific constraints and regularization techniques to ensure high-quality synthetic flight data generation.
 
 \end{document}

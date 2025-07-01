@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 140 1080 500">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 140 1080 340">
   <rect x="40" y="100" width="1100" height="540" fill="#fff"/>
-  <!-- Title -->
-  <!-- <text x="550" y="120" text-anchor="middle" font-family="Arial" font-size="24" font-weight="bold" fill="#333333">CTGAN Architecture for Flight Data Generation</text> -->
   
   <!-- Input and Output -->
   <rect x="50" y="200" width="140" height="100" fill="#f9f9f9" stroke="#0066cc" stroke-width="2" rx="8" ry="8"/>
@@ -67,21 +65,6 @@
     <text x="875" y="270" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">Reverses GMM</text>
     <text x="875" y="290" text-anchor="middle" font-family="Arial" font-size="12" fill="#555">and one-hot</text>
     
-  <!-- TRAINING/SAMPLING FLOW SECTION -->
-  <rect x="250" y="500" width="500" height="130" fill="#f9f9f9" stroke="#666666" stroke-width="2" rx="8" ry="8"/>
-  <text x="500" y="525" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#333333">Training and Sampling Process</text>
-  
-  <!-- Training process -->
-  <rect x="270" y="540" width="220" height="75" fill="#f0f8ff" stroke="#3366cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="380" y="560" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="#3366cc">Training Flow</text>
-  <text x="275" y="580" font-family="Arial" font-size="11">1. Transform flight data</text>
-  <text x="275" y="600" font-family="Arial" font-size="11">2. Train adversarially with conditioning</text>
-  
-  <!-- Sampling process -->
-  <rect x="510" y="540" width="220" height="75" fill="#f0f8ff" stroke="#3366cc" stroke-width="1" rx="5" ry="5"/>
-  <text x="620" y="560" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="#3366cc">Sampling Flow</text>
-  <text x="515" y="580" font-family="Arial" font-size="11">1. Generate with conditional vectors</text>
-  <text x="515" y="600" font-family="Arial" font-size="11">2. Inverse transform to flight format</text>
   
   <!-- Connection Arrows -->
   <!-- Input to data transformer -->
@@ -113,9 +96,5 @@
   <!-- Discriminator feedback to Generator -->
   <path d="M470,380 C440,380 440,250 470,250" stroke="#339933" stroke-width="2" stroke-dasharray="5,3" fill="none"/>
   <polygon points="470,246 470,254 478,250" fill="#339933"/>
-  
-  <!-- Flow connections -->
-  <path d="M320,470 L320,500" stroke="#666666" stroke-width="2" stroke-dasharray="3,2" fill="none"/>
-  <path d="M615,470 L615,500" stroke="#666666" stroke-width="2" stroke-dasharray="3,2" fill="none"/>
-  
+   
 </svg>
