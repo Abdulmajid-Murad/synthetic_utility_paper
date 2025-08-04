@@ -24,7 +24,9 @@
 \begin{document}
 
 
-\title{Pre‑Tactical Flight‑Delay and Turnaround Forecasting with Synthetic Aviation Data}
+\title{Pre‑Tactical Flight‑Delay and Turnaround Forecasting with Synthetic Aviation Data
+\thanks{Preprint. Under review.}
+}
 
 
 
@@ -56,11 +58,13 @@
 
 \begin{abstract}
 
-    Access to comprehensive flight operations data remains severely restricted in aviation due to commercial sensitivity and competitive considerations, hindering the development of predictive models for operational planning. This paper investigates whether synthetic data can effectively replace real operational data for training machine learning models in pre-tactical aviation scenarios—predictions made hours to days before operations using only scheduled flight information. We evaluate four state-of-the-art synthetic data generators on three prediction tasks: aircraft turnaround time, departure delays, and arrival delays. 
-    % Using a Train on Synthetic, Test on Real (TSTR) methodology on over 1.7 million European flight records, we assess both predictive performance and the preservation of operational relationships. 
+    Access to comprehensive flight operations data remains severely restricted in aviation due to commercial sensitivity and competitive considerations, hindering the development of predictive models for operational planning. This paper investigates whether synthetic data can effectively replace real operational data for training machine learning models in pre-tactical aviation scenarios—predictions made hours to days before operations using only scheduled flight information. We evaluate four state-of-the-art synthetic data generators on three prediction tasks: aircraft turnaround time, departure delays, and arrival delays.  
     Using a Train on Synthetic, Test on Real (TSTR) methodology on over 1.7 million European flight records, we first validate synthetic data quality through fidelity assessments, then assess both predictive performance and the preservation of operational relationships.
-    Our results show that transformer-based synthetic data generators can retain 94-97\% of real-data predictive performance while maintaining feature importance patterns informative for operational decision-making. We also quantify fundamental predictability limits in pre-tactical scenarios, highlighting inherent operational uncertainties. These findings suggest that high-quality synthetic data can enable broader access to aviation analytics capabilities while preserving commercial confidentiality, though stakeholders must maintain realistic expectations about pre-tactical prediction accuracy given the stochastic nature of flight operations.
-
+    % Our results show that transformer-based synthetic data generators can retain 94-97\% of real-data predictive performance while maintaining feature importance patterns informative for operational decision-making. 
+    Our results show that advanced neural network architectures, specifically transformer-based generators, can retain 94-97\% of real-data predictive performance while maintaining feature importance patterns informative for operational decision-making.
+    % We also quantify fundamental predictability limits in pre-tactical scenarios, highlighting inherent operational uncertainties. 
+    Our analysis reveals that even with real data, prediction accuracy is inherently limited (R² $\leq$ 0.44) when only scheduled information is available—establishing realistic baselines for pre-tactical forecasting. 
+    These findings suggest that high-quality synthetic data can enable broader access to aviation analytics capabilities while preserving commercial confidentiality, though stakeholders must maintain realistic expectations about pre-tactical prediction accuracy given the stochastic nature of flight operations.
 
 \end{abstract}
 
